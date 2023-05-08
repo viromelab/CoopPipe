@@ -10,17 +10,17 @@ cd CoopPipe/src/
 chmod +x *.sh
 </pre>
 
-If Miniconda is not present you can download and install it with:
+If Miniconda is not present, it can be downloaded and installed it with:
 <pre>
-./CoopPipe --miniconda
+./CoopPipe.sh --miniconda
 </pre>
 
-Install all of the tools necessary to execute the pipeline with:
+To install all of the tools necessary, please execute the pipeline with:
 <pre>
-./CoopPipe -i -t 4
+./CoopPipe.sh -i -t 4
 </pre>
 
-To execute the whole pipeline, type:
+To execute the whole pipeline, please type:
 <pre>
 ./CoopPipe.sh -r1 reads_forward.fq -r2 reads_reverse.fq
      --output out_analysis --threads 4 --memory 28        
@@ -35,7 +35,7 @@ On using this software/method please cite:
 
 ### ISSUES ###
 
-For any issue let us know at [issues link](https://github.com/mirakaya/CoopPipe/issues).
+For any issue let us know at [issues link](https://github.com/viromelab/CoopPipe/issues).
 
 ### LICENSE ###
 
