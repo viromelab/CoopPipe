@@ -2,6 +2,7 @@
 #
 RUN="0";
 INSTALL="0";
+INSTALL_SPECIFIC="0";
 INSTALL_CONDA="0";
 THREADS="4";
 MEMORY="28";
@@ -30,6 +31,9 @@ CENTRIFUGE="0";
 #
 BWA="1";
 BOWTIE2="0";
+#
+MAFFT="1";
+MUSCLE="0";
 #
 READS1="";
 READS2="";
@@ -60,9 +64,13 @@ SHOW_MENU () {
   echo "                                                                    ";
   echo " Program options -------------------------------------------------- ";
   echo "                                                                    ";
-  echo " -h, --help                   Show this,                            ";
+  echo " -h, --help                    Show this,                           ";
   echo " --miniconda                   Install Miniconda,                   ";
-  echo " -i, --install                Install all tools (w/ conda),         ";
+  echo " -i, --install                 Install all tools (w/ conda),        ";
+  echo " -is, --install-specific       Install only the tools specific to   ";
+  echo "                               CoopPipe (use exclusively if all     ";
+  echo "                               reconstruction tools have been       ";
+  echo "                               installed using HVRS),               ";
   echo "                                                                    ";
   echo " --coronaspades                Reconstruction using coronaSPAdes,   ";
   echo " --haploflow                   Reconstruction using Haploflow,      ";
@@ -82,23 +90,26 @@ SHOW_MENU () {
   echo "                                                                    ";
   echo " --all                         Reconstruction using all tools,      ";
   echo "                                                                    ";
-  echo " --virgena_timeout             Maximum time used by VirGenA         "; 
-  echo "                              to reconstruct with each reference,   ";
+  echo " --virgena-timeout             Maximum time used by VirGenA         "; 
+  echo "                               to reconstruct with each reference,  ";
   echo "                                                                    ";
-  echo " -t  <INT>, --threads <INT>   Number of threads,                    ";
-  echo " -m  <INT>, --memory <INT>    Maximum of RAM available,             ";
+  echo " -t  <INT>, --threads <INT>    Number of threads,                   ";
+  echo " -m  <INT>, --memory <INT>     Maximum of RAM available,            ";
   echo " --tools  <STR>                Path to dir where reconstruction     ";
-  echo "                              tools are installed,                  ";
+  echo "                               tools are installed,                 ";
   echo " --classifier  <STR>           Classifier to be used.               ";
-  echo "                              Options: falcon, kraken2, centrifuge  ";
+  echo "                               Options: falcon, kraken2, centrifuge ";
   echo "                                                                    ";
   echo " --align  <STR>                Aligner to be used.                  ";
-  echo "                              Options: bwa, bowtie2                 ";
+  echo "                               Options: bwa, bowtie2                ";
   echo "                                                                    ";
-  echo " -o  <STR>, --output <STR>    Output folder name,                   ";
+  echo " --msa  <STR>                  MSA to be used.                      ";
+  echo "                               Options: mafft, muscle               ";
   echo "                                                                    ";
-  echo " -r1 <STR>, --reads1 <STR>    FASTQ reads (forward),                ";
-  echo " -r2 <STR>, --reads2 <STR>    FASTQ reads (reverse),                ";
+  echo " -o  <STR>, --output <STR>     Output folder name,                  ";
+  echo "                                                                    ";
+  echo " -r1 <STR>, --reads1 <STR>     FASTQ reads (forward),               ";
+  echo " -r2 <STR>, --reads2 <STR>     FASTQ reads (reverse),               ";
   echo "                                                                    ";
   echo " Examples --------------------------------------------------------- ";
   echo "                                                                    ";
@@ -137,7 +148,7 @@ PROGRAM_EXISTS () {
   if ! [ -x "$(command -v $1)" ];
     then
     echo -e "\e[41mERROR\e[49m: $1 is not installed." >&2;
-    echo -e "\e[42mTIP\e[49m: Try: ./TRACESPipeLite.sh --install" >&2;
+    echo -e "\e[42mTIP\e[49m: Try: ./CoopPipe.sh --install" >&2;
     exit 1;
     else
     echo -e "\e[42mSUCCESS!\e[49m";
@@ -332,10 +343,11 @@ ALIGN_TO_REF () {
 
       cp $file SPECIFIC.fa
  
-      conda activate sambcf
+      
       bwa index SPECIFIC.fa
       bwa aln -t $THREADS SPECIFIC.fa $INPUT > SPECIFIC-READS.sai
       bwa samse SPECIFIC.fa SPECIFIC-READS.sai $INPUT > SPECIFIC-READS.sam
+      conda activate sambcf
       samtools view -bSh SPECIFIC-READS.sam > SPECIFIC-READS.bam;
       samtools view -bh -F4 SPECIFIC-READS.bam > FIL-SPECIFIC-READS.bam;
       samtools sort -o SORT-FIL-SPECIFIC-READS.bam FIL-SPECIFIC-READS.bam;
@@ -354,7 +366,7 @@ ALIGN_TO_REF () {
       tabix -f SPECIFIC-calls.norm.flt-indels.vcf.gz
       bcftools consensus -m SPECIFIC-zero-coverage.bed -f SPECIFIC.fa SPECIFIC-calls.norm.flt-indels.vcf.gz > SPECIFIC-consensus.fa
       tail -n +2 SPECIFIC-consensus.fa > SPECIFIC-TMP_FILE.xki
-      echo ">SPECIFIC consensus (REF: $SPECIFIC) [TRACESPipeLite]" > SPECIFIC-consensus.fa
+      echo ">SPECIFIC consensus (REF: $SPECIFIC) [$NAME_TOOL]" > SPECIFIC-consensus.fa
       cat SPECIFIC-TMP_FILE.xki >> SPECIFIC-consensus.fa
       mv SPECIFIC-consensus.fa $NAME_TOOL-$aux_file-consensus.fa 
       mv $NAME_TOOL-$aux_file-consensus.fa $OUTPUT/consensus
@@ -364,8 +376,44 @@ ALIGN_TO_REF () {
     done
   elif [[ "$BOWTIE2" -eq "1" ]];
     then
-    printf "Creating consensus with BOWTIE2.\n\n"
-    
+    printf "Creating consensus with Bowtie2.\n\n"
+    for file in $(ls *.fa);
+     do
+      printf "$file \n\n"
+      aux_file="$(cut -d'.' -f1 <<< $file)"
+      
+
+      cp $file SPECIFIC.fa
+      bowtie2-build SPECIFIC.fa host_DB
+      bowtie2 -p 1 -x host_DB -f $INPUT > SPECIFIC-READS.sam #2>> report_stderr.txt
+      conda activate sambcf
+      samtools view -bSh SPECIFIC-READS.sam > SPECIFIC-READS.bam;
+      samtools view -bh -F4 SPECIFIC-READS.bam > FIL-SPECIFIC-READS.bam;
+      samtools sort -o SORT-FIL-SPECIFIC-READS.bam FIL-SPECIFIC-READS.bam;
+      samtools rmdup -s SORT-FIL-SPECIFIC-READS.bam RD-SORT-FIL-SPECIFIC-READS.bam;
+      samtools index -b RD-SORT-FIL-SPECIFIC-READS.bam RD-SORT-FIL-SPECIFIC-READS.bam.bai
+      #
+      bedtools genomecov -ibam RD-SORT-FIL-SPECIFIC-READS.bam -bga > SPECIFIC-coverage.bed
+      awk '$4 < 1' SPECIFIC-coverage.bed > SPECIFIC-zero-coverage.bed
+      samtools faidx SPECIFIC.fa
+      bcftools mpileup -Ou -f SPECIFIC.fa RD-SORT-FIL-SPECIFIC-READS.bam \
+      | bcftools call --ploidy 1 -P 9.9e-1 -mv -Oz -o SPECIFIC-calls.vcf.gz
+      bcftools index SPECIFIC-calls.vcf.gz
+      bcftools norm -f SPECIFIC.fa SPECIFIC-calls.vcf.gz -Oz -o SPECIFIC-calls.norm.vcf.gz
+      bcftools filter --IndelGap 5 SPECIFIC-calls.norm.vcf.gz -Oz -o SPECIFIC-calls.norm.flt-indels.vcf.gz
+      zcat SPECIFIC-calls.norm.flt-indels.vcf.gz | vcf2bed --snvs > SPECIFIC-calls.bed
+      tabix -f SPECIFIC-calls.norm.flt-indels.vcf.gz
+      bcftools consensus -m SPECIFIC-zero-coverage.bed -f SPECIFIC.fa SPECIFIC-calls.norm.flt-indels.vcf.gz > SPECIFIC-consensus.fa
+      tail -n +2 SPECIFIC-consensus.fa > SPECIFIC-TMP_FILE.xki
+      echo ">SPECIFIC consensus (REF: $SPECIFIC) [$NAME_TOOL]" > SPECIFIC-consensus.fa
+      cat SPECIFIC-TMP_FILE.xki >> SPECIFIC-consensus.fa
+      mv SPECIFIC-consensus.fa $NAME_TOOL-$aux_file-consensus.fa 
+      mv $NAME_TOOL-$aux_file-consensus.fa $OUTPUT/consensus
+      conda activate align
+      rm -f SPECIFIC-TMP_FILE.xki;
+      rm *SPECIFIC*
+      rm host_DB*
+      done    
   fi
 
   conda activate base
@@ -377,11 +425,38 @@ ALIGN_TO_REF () {
 PERFORM_MULTIPLE_ALIGNMENT () {
   DIRECTORY=$1
   #
-  printf "Performing multiple alignment.\n\n"
-  cd $DIRECTORY
-  cat *-reconstructed.fa > combined.fa
-  mafft --auto combined.fa > multfasta.fa
-  cd $CURR_PATH
+  
+  if [[ "$MAFFT" -eq "1" ]];
+    then
+    printf "Performing multiple alignment using MAFFT.\n\n"
+    conda activate mafft
+    cd $DIRECTORY
+    for virus in "${VIRUSES[@]}"
+      do
+      aux_virus="$(cut -d'.' -f1 <<< $virus)"
+      aux_virus="$(echo $aux_virus | awk -F/ '{print $NF}')"
+      #ls
+      cat *-$aux_virus-consensus.fa > $aux_virus-combined.fa
+      mafft --auto $aux_virus-combined.fa > multifasta-$aux_virus.fa
+    done
+    cd $CURR_PATH
+    conda activate base
+  elif [[ "$MUSCLE" -eq "1" ]];
+    then
+    printf "Performing multiple alignment using MUSCLE.\n\n"
+    conda activate muscle
+    cd $DIRECTORY
+    for virus in "${VIRUSES[@]}"
+      do
+      aux_virus="$(cut -d'.' -f1 <<< $virus)"
+      aux_virus="$(echo $aux_virus | awk -F/ '{print $NF}')"
+      #ls
+      cat *-$aux_virus-consensus.fa > $aux_virus-combined.fa
+      muscle -align $aux_virus-combined.fa -output multifasta-$aux_virus.fa
+    done
+    cd $CURR_PATH
+    conda activate base
+  fi
 }
 #
 ################################################################################
@@ -407,6 +482,11 @@ while [[ $# -gt 0 ]]
     ;;
     -i|--install)
       INSTALL=1;
+      INSTALL_SPECIFIC=1;
+      shift
+    ;;
+    -is|--install-specific)
+      INSTALL_SPECIFIC=1;
       shift
     ;;
     --coronaspades)
@@ -487,7 +567,7 @@ while [[ $# -gt 0 ]]
       VPIPE=1;
       shift
     ;;
-    --virgena_timeout)
+    --virgena-timeout)
       VIRGENA_TIMEOUT="$2";
       shift 2;
     ;;
@@ -518,6 +598,28 @@ while [[ $# -gt 0 ]]
       fi     
       shift 2;
     ;;
+    --align)
+      TMP="$2";
+      TMP=$(echo "$TMP" | tr '[:upper:]' '[:lower:]')
+
+      if [[ "$TMP" == "bowtie2" ]];
+        then
+        BOWTIE2="1"
+        BWA="0"  
+      fi     
+      shift 2;
+    ;;
+    --align)
+      TMP="$2";
+      TMP=$(echo "$TMP" | tr '[:upper:]' '[:lower:]')
+
+      if [[ "$TMP" == "muscle" ]];
+        then
+        MUSCLE="1"
+        MAFFT="0"  
+      fi     
+      shift 2;
+    ;;
     -o|--output)
       OUTPUT="$(pwd)/$2";
       shift 2;
@@ -534,7 +636,7 @@ while [[ $# -gt 0 ]]
     ;;
     -*) # unknown option with small
     echo "Invalid arg ($1)!";
-    echo "For help, try: TRACESPipeLite.sh -h"
+    echo "For help, try: CoopPipe.sh -h"
     exit 1;
     ;;
   esac
@@ -566,17 +668,20 @@ if [[ "$INSTALL_CONDA" -eq "1" ]];
 #
 ################################################################################
 #
-if [[ "$INSTALL" -eq "1" ]];
+if [[ "$INSTALL_SPECIFIC" -eq "1" ]];
   then
   #
   eval "$(conda shell.bash hook)"
   sudo apt install git -y
   #rm -rf HVRS
-  git clone https://github.com/mirakaya/HVRS.git
-  cd HVRS/src/
-  chmod +x *.sh
-  ./Installation.sh
-  cd ../../
+  if [[ "$INSTALL" -eq "1" ]];
+    then
+    git clone https://github.com/mirakaya/HVRS.git
+    cd HVRS/src/
+    chmod +x *.sh
+    ./Installation.sh --all
+    cd ../../
+  fi
   #FALCON-meta
   conda create -n falcon -y
   conda activate falcon 
@@ -652,7 +757,7 @@ if [[ "$RUN" -eq "1" ]];
   #
   cd $TOOL_PATH
   #
-  #rm -rf $OUTPUT
+  rm -rf $OUTPUT
   mkdir $OUTPUT
   mkdir $OUTPUT/consensus
   #
@@ -677,9 +782,11 @@ if [[ "$CORONASPADES" -eq "1" ]];
     cp output/coronaspades-reconstructed.fa $OUTPUT
     cd ..
     conda activate base
+    rm -rf coronaspades_reconstruction
     cd $CURR_PATH
     CLASSIFY_INPUT coronaSPAdes $OUTPUT/coronaspades-reconstructed.fa
     mv coronaSPAdes $OUTPUT
+    ALIGN_TO_REF $OUTPUT/coronaSPAdes $OUTPUT/coronaspades-reconstructed.fa coronaspades
     cd $TOOL_PATH
   fi
   #
@@ -700,6 +807,7 @@ if [[ "$CORONASPADES" -eq "1" ]];
     rm -rf test
     cd ..  
     conda activate base 
+    rm -rf haploflow_data
     cd $CURR_PATH
     CLASSIFY_INPUT Haploflow $OUTPUT/haploflow-reconstructed.fa
     mv Haploflow $OUTPUT
@@ -722,6 +830,10 @@ if [[ "$CORONASPADES" -eq "1" ]];
     /bin/time -f "TIME\t%e\nMEM\t%M\nCPU_perc\t%P" -o lazypipe-time.txt perl lazypipe.pl -1 $aux_READS1 -2 $aux_READS2 --pipe all,rep -v -t $THREADS -res output
 
     mv output/*/contigs.fa results/lazypipe-reconstructed.fa
+    #rm -rf output
+    #mkdir output
+    rm -rf *.fq
+    rm -rf results
     cp results/lazypipe-reconstructed.fa $OUTPUT
     mv lazypipe-time.txt $OUTPUT
 
@@ -749,9 +861,11 @@ if [[ "$CORONASPADES" -eq "1" ]];
     cp output/metaspades-reconstructed.fa $OUTPUT
     cd ..
     conda activate base
+    rm -rf metaspades_reconstruction
     cd $CURR_PATH
     CLASSIFY_INPUT metaSPAdes $OUTPUT/metaspades-reconstructed.fa
     mv metaSPAdes $OUTPUT
+    ALIGN_TO_REF $OUTPUT/metaSPAdes $OUTPUT/metaspades-reconstructed.fa metaspades
     cd $TOOL_PATH 
   fi
   #
@@ -774,9 +888,11 @@ if [[ "$CORONASPADES" -eq "1" ]];
     cp output/metaviralspades-reconstructed.fa $OUTPUT
     cd ..
     conda activate base
+    rm -rf metaviralspades_reconstruction
     cd $CURR_PATH
     CLASSIFY_INPUT metaviralSPAdes $OUTPUT/metaviralspades-reconstructed.fa
     mv metaviralSPAdes $OUTPUT
+    ALIGN_TO_REF $OUTPUT/metaviralSPAdes $OUTPUT/metaviralspades-reconstructed.fa metaviralspades
     cd $TOOL_PATH
   fi
   #
@@ -797,11 +913,14 @@ if [[ "$CORONASPADES" -eq "1" ]];
     mv Contigs.fa pehaplo-reconstructed.fa
     cp pehaplo-reconstructed.fa $OUTPUT
     rm -rf Contigs.fa
-    cd ../../../
+    cd ../
+    rm -rf assembly
+    cd ../../
     conda activate base  
     cd $CURR_PATH
     CLASSIFY_INPUT PEhaplo $OUTPUT/pehaplo-reconstructed.fa
     mv PEhaplo $OUTPUT
+    ALIGN_TO_REF $OUTPUT/PEhaplo $OUTPUT/pehaplo-reconstructed.fa pehaplo
     cd $TOOL_PATH
   fi
   #
@@ -850,15 +969,18 @@ MEM	$total_mem
 CPU_perc	$total_cpu%" > qure-time.txt
     mv qure-time.txt $OUTPUT
     rm -rf qure-*-time.txt
+    rm paired_*
+    rm *.fa
     cd ..
     conda activate base
     cd $CURR_PATH
     cp -r references QuRe
     mv QuRe $OUTPUT
+    ALIGN_TO_REF $OUTPUT/QuRe $OUTPUT/qure-reconstructed.fa qure
     cd $TOOL_PATH
     fi
   #
-  if [[ "$QVG" -eq "1" ]];
+  if [[ "$QVG" -eq "1" ]]; #unchanged
     then
     printf "Reconstructing with QVG\n\n"
     eval "$(conda shell.bash hook)"
@@ -924,6 +1046,7 @@ CPU_perc	$total_cpu%" > qvg-time.txt
     cd $CURR_PATH
     cp -r references QVG
     mv QVG $OUTPUT
+    ALIGN_TO_REF $OUTPUT/QVG $OUTPUT/qvg-reconstructed.fa qvg
     cd $TOOL_PATH
   fi
   #
@@ -947,10 +1070,12 @@ CPU_perc	$total_cpu%" > qvg-time.txt
     cp output/spades-reconstructed.fa $OUTPUT
     cd ..
     conda activate base
+    rm -rf spades_reconstruction
     #
     cd $CURR_PATH
     CLASSIFY_INPUT SPAdes $OUTPUT/spades-reconstructed.fa
     mv SPAdes $OUTPUT
+    ALIGN_TO_REF $OUTPUT/SPAdes $OUTPUT/spades-reconstructed.fa spades
     cd $TOOL_PATH   
   fi
   #
@@ -963,10 +1088,14 @@ CPU_perc	$total_cpu%" > qvg-time.txt
     mv assembly_scaffolds.fa ssake-reconstructed.fa
     cp ssake-reconstructed.fa $OUTPUT
     mv ssake-time.txt $OUTPUT
+    rm *.fa
+    rm *.fq
+    rm assembly*
     cd ../../
     cd $CURR_PATH
     CLASSIFY_INPUT SSAKE $OUTPUT/ssake-reconstructed.fa
     mv SSAKE $OUTPUT
+    ALIGN_TO_REF $OUTPUT/SSAKE $OUTPUT/ssake-reconstructed.fa ssake
     cd $TOOL_PATH 
   fi
   #
@@ -995,7 +1124,13 @@ CPU_perc	$total_cpu%" > qvg-time.txt
 
     mv tracespipe-reconstructed.fa $OUTPUT
     mv tracespipe-time.txt $OUTPUT
-    cd ..   
+    rm -rf output_data
+    mkdir output_data
+    cd meta_data
+    rm meta_info.txt
+    cd ../input_data
+    rm *
+    cd ../../   
     conda activate base 
   fi
   #
@@ -1025,11 +1160,14 @@ CPU_perc	$total_cpu%" > qvg-time.txt
     cat *-consensus.fa > tracespipelite-reconstructed.fa
     mv tracespipelite-time.txt $OUTPUT
     cp tracespipelite-reconstructed.fa $OUTPUT
+    rm -rf test_viral_analysis
+    rm *.fq.gz
+    rm *-consensus.fa
     cd ../../
     conda activate base
   fi
   #
-  if [[ "$VIRGENA" -eq "1" ]];
+  if [[ "$VIRGENA" -eq "1" ]]; #unchanged
     then
     printf "Reconstructing with VirGenA\n\n"
     eval "$(conda shell.bash hook)"
@@ -1176,6 +1314,7 @@ CPU_perc	$total_cpu%" > ../virgena-time.txt
     cd $CURR_PATH
     cp -r references VirGenA
     mv VirGenA $OUTPUT
+    ALIGN_TO_REF $OUTPUT/VirGenA $OUTPUT/virgena-reconstructed.fa virgena
     cd $TOOL_PATH
   fi
   #
@@ -1240,12 +1379,19 @@ CPU_perc	$total_cpu%" > vispa-time.txt
     cp vispa-time.txt $OUTPUT
     rm -rf vispa-*-time.txt
     rm *.fa
+    cd ../
+    rm *.fa
+    rm *.fq.gz
+    cd res
+    rm *.fa*
+    rm new*.txt
     cd ../../
 
     conda activate base  
     cd $CURR_PATH
     cp -r references ViSpA
     mv ViSpA $OUTPUT
+    ALIGN_TO_REF $OUTPUT/ViSpA $OUTPUT/vispa-reconstructed.fa vispa
     cd $TOOL_PATH
   fi
   #
@@ -1317,6 +1463,22 @@ output:
       cp results/SRR10903401/20200102/references/ref_majority.fasta .
       mv ref_majority.fasta $aux_virus.fasta
 
+      cd references
+      rm ${aux_virus}*
+      cd ..
+      cd resources
+      rm -rf ${aux_virus}
+      cd results
+      rm -rf *
+      cd ..
+      cd samples
+      rm -rf *
+      cd ..
+      cd config
+      rm ${aux_virus}.yaml
+      cd ..
+      
+      
     done
 
     total_time=0
@@ -1355,6 +1517,7 @@ CPU_perc	$total_cpu%" > v-pipe-time.txt
     cd $CURR_PATH
     cp -r references V-pipe
     mv V-pipe $OUTPUT
+    ALIGN_TO_REF $OUTPUT/V-pipe $OUTPUT/v-pipe-reconstructed.fa v-pipe
     cd $TOOL_PATH
   fi 
   cd $CURR_PATH
@@ -1362,7 +1525,8 @@ fi
 #
 ################################################################################
 #
-PERFORM_MULTIPLE_ALIGNMENT $OUTPUT
+#PERFORM_MULTIPLE_ALIGNMENT $OUTPUT/consensus
+#
 #printf "Evaluating results based on the classification made of the input reads.\n\n"
 #cd references
 #cat *.fa > reference_file.fa
