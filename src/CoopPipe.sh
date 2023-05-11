@@ -320,6 +320,27 @@ CLASSIFY_INPUT () {
   #centrifuge-build -p 4 --conversion-table taxonomy/seqid2taxid.map --taxonomy-tree taxonomy/nodes.dmp --name-table taxonomy/names.dmp VDB.fa abv
 
 }
+
+CLASSIFY_TRACES () {
+  FILE=$1
+  OUT_DIR=$2
+  
+  mkdir $OUT_DIR
+  
+  SAMPLES=( $(cat $FILE | tr "\t" "~" | cut -d"~" -f3 ) )
+
+  for sample in "${SAMPLES[@]}"
+      do
+      if [[ "$sample" != "-" ]];
+        then
+        NAME=$( cat $FILE | grep $sample| tr "\t" "~" | cut -d"~" -f1  ) 
+        gto_fasta_extract_read_by_pattern -p "$sample" < VDB.fa > "$NAME.fa"
+        mv "$NAME.fa" "$OUT_DIR"
+      fi
+  done
+  mv $FILE $OUT_DIR
+
+}
 #
 ## RUN VIRAL METAGENOMIC COMPOSITION =========================================
 #
@@ -725,6 +746,11 @@ if [[ "$INSTALL_SPECIFIC" -eq "1" ]];
   conda activate mafft
   conda install -c bioconda mafft -y
   conda activate base
+  #muscle 
+  conda create -n muscle -y 
+  conda activate muscle
+  conda install -c bioconda muscle -y
+  conda activate base
   #  
   CHECK_PROGRAMS
   #
@@ -830,13 +856,13 @@ if [[ "$CORONASPADES" -eq "1" ]];
     /bin/time -f "TIME\t%e\nMEM\t%M\nCPU_perc\t%P" -o lazypipe-time.txt perl lazypipe.pl -1 $aux_READS1 -2 $aux_READS2 --pipe all,rep -v -t $THREADS -res output
 
     mv output/*/contigs.fa results/lazypipe-reconstructed.fa
-    #rm -rf output
-    #mkdir output
-    rm -rf *.fq
-    rm -rf results
+    rm -rf output
+    mkdir output
+    
     cp results/lazypipe-reconstructed.fa $OUTPUT
     mv lazypipe-time.txt $OUTPUT
-
+    rm -rf *.fq
+    rm -rf results*
     cd ..
     conda activate base 
 
@@ -1124,13 +1150,17 @@ CPU_perc	$total_cpu%" > qvg-time.txt
 
     mv tracespipe-reconstructed.fa $OUTPUT
     mv tracespipe-time.txt $OUTPUT
-    rm -rf output_data
-    mkdir output_data
+    rm *-time.txt
+    cd output_data
+    mv TRACES_results/REPORT_META_VIRAL_ALL_SAMPLES.txt $OUTPUT    
+    rm -rf *
+    cd ..
     cd meta_data
     rm meta_info.txt
     cd ../input_data
     rm *
     cd ../../   
+    CLASSIFY_TRACES $OUTPUT/REPORT_META_VIRAL_ALL_SAMPLES.txt $OUTPUT/TRACESPipe
     conda activate base 
   fi
   #
@@ -1160,11 +1190,14 @@ CPU_perc	$total_cpu%" > qvg-time.txt
     cat *-consensus.fa > tracespipelite-reconstructed.fa
     mv tracespipelite-time.txt $OUTPUT
     cp tracespipelite-reconstructed.fa $OUTPUT
-    rm -rf test_viral_analysis
+    rm *-*.fa
+    mv test_viral_analysis/best-viral-metagenomics.txt $OUTPUT
+    rm -rf test_viral_analysis*
     rm *.fq.gz
     rm *-consensus.fa
     cd ../../
     conda activate base
+    CLASSIFY_TRACES $OUTPUT/best-viral-metagenomics.txt $OUTPUT/TRACESPipeLite
   fi
   #
   if [[ "$VIRGENA" -eq "1" ]]; #unchanged
@@ -1525,7 +1558,7 @@ fi
 #
 ################################################################################
 #
-#PERFORM_MULTIPLE_ALIGNMENT $OUTPUT/consensus
+PERFORM_MULTIPLE_ALIGNMENT $OUTPUT/consensus
 #
 #printf "Evaluating results based on the classification made of the input reads.\n\n"
 #cd references
