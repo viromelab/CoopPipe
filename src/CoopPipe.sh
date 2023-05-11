@@ -29,8 +29,8 @@ FALCON_META="1";
 KRAKEN2="0";
 CENTRIFUGE="0";
 #
-BWA="1";
-BOWTIE2="0";
+BWA="0";
+BOWTIE2="1";
 #
 MAFFT="1";
 MUSCLE="0";
@@ -101,7 +101,7 @@ SHOW_MENU () {
   echo "                               Options: falcon, kraken2, centrifuge ";
   echo "                                                                    ";
   echo " --align  <STR>                Aligner to be used.                  ";
-  echo "                               Options: bwa, bowtie2                ";
+  echo "                               Options: bowtie2, bwa                ";
   echo "                                                                    ";
   echo " --msa  <STR>                  MSA to be used.                      ";
   echo "                               Options: mafft, muscle               ";
@@ -363,8 +363,7 @@ ALIGN_TO_REF () {
       aux_file="$(cut -d'.' -f1 <<< $file)"
 
       cp $file SPECIFIC.fa
- 
-      
+
       bwa index SPECIFIC.fa
       bwa aln -t $THREADS SPECIFIC.fa $INPUT > SPECIFIC-READS.sai
       bwa samse SPECIFIC.fa SPECIFIC-READS.sai $INPUT > SPECIFIC-READS.sam
@@ -446,7 +445,8 @@ ALIGN_TO_REF () {
 PERFORM_MULTIPLE_ALIGNMENT () {
   DIRECTORY=$1
   #
-  
+  eval "$(conda shell.bash hook)"
+  #
   if [[ "$MAFFT" -eq "1" ]];
     then
     printf "Performing multiple alignment using MAFFT.\n\n"
@@ -478,6 +478,24 @@ PERFORM_MULTIPLE_ALIGNMENT () {
     cd $CURR_PATH
     conda activate base
   fi
+}
+
+CREATE_FINAL_CONSENSUS () {
+  DIRECTORY=$1
+  #
+  eval "$(conda shell.bash hook)"
+  conda activate emboss
+  cd $DIRECTORY
+  for file in $(ls multifasta*.fa);
+    do
+    tmp="$(cut -d'.' -f1 <<< $file)"
+    name_vir="$(cut -d'-' -f2 <<< $file)"    
+    cons -sequence $file -outseq cooppipe-$name_vir-consensus.fa
+  done
+  rm *-combined.fa
+  rm multifasta-*.fa
+  cd $CURR_DIR
+  conda activate base
 }
 #
 ################################################################################
@@ -623,14 +641,14 @@ while [[ $# -gt 0 ]]
       TMP="$2";
       TMP=$(echo "$TMP" | tr '[:upper:]' '[:lower:]')
 
-      if [[ "$TMP" == "bowtie2" ]];
+      if [[ "$TMP" == "BWA" ]];
         then
-        BOWTIE2="1"
-        BWA="0"  
+        BWA="1"
+        BOWTIE2="0"  
       fi     
       shift 2;
     ;;
-    --align)
+    --msa)
       TMP="$2";
       TMP=$(echo "$TMP" | tr '[:upper:]' '[:lower:]')
 
@@ -751,7 +769,12 @@ if [[ "$INSTALL_SPECIFIC" -eq "1" ]];
   conda activate muscle
   conda install -c bioconda muscle -y
   conda activate base
-  #  
+  #emboss
+  conda create -n emboss -y 
+  conda activate emboss
+  conda install -c bioconda emboss -y
+  conda activate base
+  #
   CHECK_PROGRAMS
   #
   fi
@@ -1142,7 +1165,7 @@ CPU_perc	$total_cpu%" > qvg-time.txt
     cd ../src/
     cp ../../VDB.fa .
 
-    /bin/time -f "TIME\t%e\nMEM\t%M\nCPU_perc\t%P" -o tracespipe-time.txt ./TRACESPipe.sh --run-meta --run-all-v-alig --very-sensitive -t $THREADS
+    /bin/time -f "TIME\t%e\nMEM\t%M\nCPU_perc\t%P" -o tracespipe-time.txt ./TRACESPipe.sh --run-meta --run-all-v-alig --very-sensitive -t $THREADS --cache 10
     cp tracespipe-time.txt ../
     cd ../output_data/TRACES_viral_consensus
     cat *.fa > ../../tracespipe-reconstructed.fa     
@@ -1559,6 +1582,7 @@ fi
 ################################################################################
 #
 PERFORM_MULTIPLE_ALIGNMENT $OUTPUT/consensus
+CREATE_FINAL_CONSENSUS $OUTPUT/consensus
 #
 #printf "Evaluating results based on the classification made of the input reads.\n\n"
 #cd references
