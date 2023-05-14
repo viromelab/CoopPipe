@@ -334,7 +334,20 @@ CLASSIFY_TRACES () {
       if [[ "$sample" != "-" ]];
         then
         NAME=$( cat $FILE | grep $sample| tr "\t" "~" | cut -d"~" -f1  ) 
-        gto_fasta_extract_read_by_pattern -p "$sample" < VDB.fa > "$NAME.fa"
+        if [[ "$NAME" == "B19" ]];
+          then
+          NAME="B19V"
+        elif [[ "$NAME" == "HPV" ]];
+          then
+          NAME="HPV68"
+        elif [[ "$NAME" == "HV3" ]];
+          then
+          NAME="VZV"
+        elif [[ "$NAME" == "POLY5" ]];
+          then
+          NAME="MCPyV"
+        fi
+        gto_fasta_extract_read_by_pattern -p "$sample" < $CURR_PATH/VDB.fa > "$NAME.fa"
         mv "$NAME.fa" "$OUT_DIR"
       fi
   done
@@ -483,18 +496,20 @@ PERFORM_MULTIPLE_ALIGNMENT () {
 CREATE_FINAL_CONSENSUS () {
   DIRECTORY=$1
   #
+  
   eval "$(conda shell.bash hook)"
   conda activate emboss
   cd $DIRECTORY
   for file in $(ls multifasta*.fa);
     do
     tmp="$(cut -d'.' -f1 <<< $file)"
-    name_vir="$(cut -d'-' -f2 <<< $file)"    
-    cons -sequence $file -outseq cooppipe-$name_vir-consensus.fa
+    name_vir="$(cut -d'-' -f2 <<< $tmp)"    
+    cons -sequence $file -outseq cooppipeemboss-$name_vir-consensus.fa
+    python3 $CURR_PATH/generate_consensus.py -i $file -o cooppipealt-$name_vir-consensus.fa
   done
   rm *-combined.fa
   rm multifasta-*.fa
-  cd $CURR_DIR
+  cd $CURR_PATH
   conda activate base
 }
 #
@@ -887,6 +902,11 @@ if [[ "$CORONASPADES" -eq "1" ]];
     rm -rf *.fq
     rm -rf results*
     cd ..
+    cd $CURR_PATH
+    CLASSIFY_INPUT LAZYPIPE $OUTPUT/lazypipe-reconstructed.fa
+    mv LAZYPIPE $OUTPUT
+    ALIGN_TO_REF $OUTPUT/LAZYPIPE $OUTPUT/lazypipe-reconstructed.fa lazypipe
+    cd $TOOL_PATH 
     conda activate base 
 
   fi
@@ -1165,7 +1185,7 @@ CPU_perc	$total_cpu%" > qvg-time.txt
     cd ../src/
     cp ../../VDB.fa .
 
-    /bin/time -f "TIME\t%e\nMEM\t%M\nCPU_perc\t%P" -o tracespipe-time.txt ./TRACESPipe.sh --run-meta --run-all-v-alig --very-sensitive -t $THREADS --cache 10
+    /bin/time -f "TIME\t%e\nMEM\t%M\nCPU_perc\t%P" -o tracespipe-time.txt ./TRACESPipe.sh --run-meta --run-all-v-alig --very-sensitive -t $THREADS #--cache 10
     cp tracespipe-time.txt ../
     cd ../output_data/TRACES_viral_consensus
     cat *.fa > ../../tracespipe-reconstructed.fa     
@@ -1184,6 +1204,8 @@ CPU_perc	$total_cpu%" > qvg-time.txt
     rm *
     cd ../../   
     CLASSIFY_TRACES $OUTPUT/REPORT_META_VIRAL_ALL_SAMPLES.txt $OUTPUT/TRACESPipe
+    ALIGN_TO_REF $OUTPUT/TRACESPipe $OUTPUT/tracespipe-reconstructed.fa tracespipe
+    cd $TOOL_PATH
     conda activate base 
   fi
   #
@@ -1195,6 +1217,7 @@ CPU_perc	$total_cpu%" > qvg-time.txt
     cd TRACESPipeLite/src/  	
     cp $READS1 $READS2 .
     lzma -d VDB.mfa.lzma
+    rm -rf *.fq.gz
     gzip $aux_READS1
     gzip $aux_READS2
     /bin/time -f "TIME\t%e\nMEM\t%M\nCPU_perc\t%P" -o tracespipelite-time.txt ./TRACESPipeLite.sh --similarity 50 --threads $THREADS --reads1 $aux_READS1.gz --reads2 $aux_READS2.gz --database VDB.mfa --output test_viral_analysis --no-plots
@@ -1221,6 +1244,8 @@ CPU_perc	$total_cpu%" > qvg-time.txt
     cd ../../
     conda activate base
     CLASSIFY_TRACES $OUTPUT/best-viral-metagenomics.txt $OUTPUT/TRACESPipeLite
+    ALIGN_TO_REF $OUTPUT/TRACESPipeLite $OUTPUT/tracespipelite-reconstructed.fa tracespipelite
+    cd $TOOL_PATH
   fi
   #
   if [[ "$VIRGENA" -eq "1" ]]; #unchanged
