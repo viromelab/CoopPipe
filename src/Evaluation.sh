@@ -225,6 +225,7 @@ if [[ -d "$REF_DIR" ]] && [[ -d "$D_PATH" ]];
       NR_SPECIES=$(grep '>' $file -c)
       gto_fasta_rand_extra_chars < $file > tmp.fa
       gto_fasta_to_seq < tmp.fa > $file.seq
+      gto_fasta_to_seq < $REF_FILE > $REF_FILE.seq
       
       #Compressing sequences C(X) or C(X,Y)
       GeCo3 -tm 1:1:0:1:0.9/0:0:0 -tm 7:10:0:1:0/0:0:0 -tm 16:100:1:10:0/3:10:0.9 -lr 0.03 -hs 64 $file.seq 
@@ -233,14 +234,14 @@ if [[ -d "$REF_DIR" ]] && [[ -d "$D_PATH" ]];
       
       #Conditional compression C(X|Y) [use reference and target]
 
-      GeCo3 -rm 20:500:1:12:0.9/3:100:0.9 -rm 13:200:1:1:0.9/0:0:0 -tm 1:1:0:1:0.9/0:0:0 -tm 7:10:0:1:0/0:0:0 -tm 16:100:1:10:0/3:10:0.9 -lr 0.03 -hs 64 -r $REF_FILE $file.seq
-      COMPRESSED_SIZE_COND_COMPRESSION=$(ls -l $file.seq.co | cut -d' ' -f5)   
-      rm $file.seq.co
+      GeCo3 -rm 20:500:1:12:0.9/3:100:0.9 -rm 13:200:1:1:0.9/0:0:0 -tm 1:1:0:1:0.9/0:0:0 -tm 7:10:0:1:0/0:0:0 -tm 16:100:1:10:0/3:10:0.9 -lr 0.03 -hs 64 -r $file.seq $REF_FILE.seq
+      COMPRESSED_SIZE_COND_COMPRESSION=$(ls -l $REF_FILE.seq.co | cut -d' ' -f5)   
+      rm $REF_FILE.seq.co
       
       #Relative compression (only reference models) C(X||Y)
-      GeCo3 -rm 20:500:1:12:0.9/3:100:0.9 -rm 13:200:1:1:0.9/0:0:0 -lr 0.03 -hs 64 -r $REF_FILE $file.seq
-      COMPRESSED_SIZE_W_REF=$(ls -l $file.seq.co | cut -d' ' -f5)      
-      rm $file.seq.co            
+      GeCo3 -rm 20:500:1:12:0.9/3:100:0.9 -rm 13:200:1:1:0.9/0:0:0 -lr 0.03 -hs 64 -r $file.seq $REF_FILE.seq
+      COMPRESSED_SIZE_W_REF=$(ls -l $REF_FILE.seq.co | cut -d' ' -f5)      
+      rm $REF_FILE.seq.co            
       FILE_SIZE=$(ls -l $file | cut -d' ' -f5)
      
       rm $file.seq
