@@ -1587,11 +1587,11 @@ output:
 MEM	$total_mem
 CPU_perc	$total_cpu%" > v-pipe-time.txt
 
-    cp v-pipe-time.txt $OUTPUT 
+    mv v-pipe-time.txt $OUTPUT 
     rm -rf v-pipe-*-time.txt
     cat *.fasta > v-pipe-reconstructed.fa
     rm -rf *.fasta
-    cp v-pipe-reconstructed.fa $OUTPUT    
+    mv v-pipe-reconstructed.fa $OUTPUT    
 
     cd ../
     conda activate base
