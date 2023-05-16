@@ -103,6 +103,8 @@ if [[ "$HELP" -eq "1" ]];
 #
 if [[ -d "$REF_DIR" ]] && [[ -d "$D_PATH" ]];
   then
+  eval "$(conda shell.bash hook)"
+  conda activate evaluation
   rm -rf Results
   mkdir Results
   #cd Results
@@ -266,7 +268,7 @@ if [[ -d "$REF_DIR" ]] && [[ -d "$D_PATH" ]];
     done
     
   done
-  
+  conda activate base
 else 
   printf "ERR \n\n"
 

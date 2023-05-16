@@ -50,6 +50,8 @@ declare -a VIRUSES_AVAILABLE=("B19V" "BuV" "CuV" "HBoV" "AAV" "BKPyV" "JCPyV" "K
                     "HSV-2" "VZV" "EBV" "HCMV" "HHV6" "HHV7" "KSHV" "ReDoV"
                     "VARV" "MPXV" "EV" "SARS2" "HERV" "MT");
 declare -a VIRUSES;
+FORCE_REFERENCES="0";
+REFERENCES_DIR="";
 #
 ################################################################################
 #
@@ -648,7 +650,13 @@ while [[ $# -gt 0 ]]
       elif [[ "$TMP" == "centrifuge" ]];
         then
         CENTRIFUGE="1"
-        FALCON_META="0"  
+        FALCON_META="0" 
+      elif [[ "$TMP" == "falcon" ]];
+        then
+        FALCON_META="1"  
+      else
+        FORCE_REFERENCES="1";
+        REFERENCES_DIR="$2";
       fi     
       shift 2;
     ;;
@@ -814,10 +822,18 @@ if [[ "$RUN" -eq "1" ]];
   #
   printf "$(pwd)\n\n"
   CREATE_PAIRED_FA_FILES
-  CLASSIFY_INPUT references paired.fa
-  cd references
-  VIRUSES=($(ls -1 -d "$PWD/"*.fa)) 
-  cd ..
+  if [[ "$FORCE_REFERENCES" -eq "1" ]];
+    then
+    printf "References were forced. Path is $REFERENCES_DIR\n\n"
+    cd $REFERENCES_DIR
+    VIRUSES=($(ls -1 -d "$PWD/"*.fa)) 
+    cd $CURR_PATH
+  else
+    CLASSIFY_INPUT references paired.fa
+    cd references
+    VIRUSES=($(ls -1 -d "$PWD/"*.fa)) 
+    cd ..
+  fi
   #
   cd $TOOL_PATH
   #
