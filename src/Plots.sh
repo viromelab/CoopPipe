@@ -39,11 +39,24 @@ for virus in "${VIRUSES_AVAILABLE[@]}"
   
   cd ..
   
-
+  cd NRC
+  cp ../Results/total_stats.tsv .
+ 
+  sort -k6 -n total_stats.tsv > tmp.tsv
+  cooppipe=$(cat tmp.tsv | tr ',' '.' | grep "${virus}" | grep -w "cooppipe*" > "${virus}")
+  best_tool=$(cat tmp.tsv | tail -n +2 | tr ',' '.'  | grep "${virus}" | grep -w --invert-match "cooppipe*" | head -1 >> "${virus}")
   
+  cd ..
+  
+  cd NCD
+  cp ../Results/total_stats.tsv .
+ 
+  sort -k7 -n total_stats.tsv > tmp.tsv
+  cooppipe=$(cat tmp.tsv | tr ',' '.' | grep "${virus}" | grep -w "cooppipe*" > "${virus}")
+  best_tool=$(cat tmp.tsv | tail -n +2 | tr ',' '.'  | grep "${virus}" | grep -w --invert-match "cooppipe*" | head -1 >> "${virus}")
+ 
+  cd ..  
 done
-
-printf "nr vir -> $nr_virus \n\n"
 #
 cd avg_identity
 find . -type f -empty -delete
@@ -52,10 +65,12 @@ cd ..
 #
 cd NCD
 find . -type f -empty -delete
+rm *.tsv
 cd ..
 #
 cd NRC
 find . -type f -empty -delete
+rm *.tsv
 cd ..
 #
 list_avg=($(ls avg_identity))  
@@ -96,6 +111,8 @@ gnuplot << EOF
     }
 EOF
 #
+cp *.pdf ../Graphs
+cd ../NCD
 #
 gnuplot << EOF
     reset
@@ -103,29 +120,30 @@ gnuplot << EOF
     set output "NCD.pdf"
     set datafile separator "\t"
     
+    spacing_x = 30
     ymax = 1.05
     ymin = 0
-    offset = ( ymax - ymin )/15.0   
+    offset = ( ymax - ymin ) / 15.0    
     set yrange [ymin:ymax]
-    set xrange [0:42]
-    set key outside right top
-    set xtics auto
+    set xrange [0:$nr_virus * spacing_x]
+   
     set ytics auto
     set ylabel "NCD"
-    set xlabel "Coverage"
+    set xlabel "Viruses"
     set multiplot layout 1,1
     set rmargin 30
     set key at screen 1, graph 1  
     
-    count = 1
-    do for [ file in "${list_cnt0[@]}"]{  
-      set key at 64, ymax
-      plot file u 13:6 title file with linespoints linestyle count
-      count = count + 1
-      ymax = ymax - offset
+    count = 10
+    do for [ file in "${list_ncd[@]}"]{  
+      set xtics (file count)
+      plot file using (count):6:13 with labels point  pt 7 offset char 6,-0.1 notitle
+      count = count + spacing_x
     }
 EOF
 #
+cp *.pdf ../Graphs
+cd ../NRC
 #
 gnuplot << EOF
     reset
@@ -133,32 +151,32 @@ gnuplot << EOF
     set output "NRC.pdf"
     set datafile separator "\t"
     
-    ymax = 0.11
+    spacing_x = 30
+    ymax = 0.3
     ymin = 0
-    offset = ( ymax - ymin )/15.0   
+    offset = ( ymax - ymin ) / 15.0    
     set yrange [ymin:ymax]
-    set xrange [0:42]
-    set key outside right top
-    set xtics auto
+    set xrange [0:$nr_virus * spacing_x]
+   
     set ytics auto
-    set ylabel "NRC"
-    set xlabel "Coverage"
+    set ylabel "NCD"
+    set xlabel "Viruses"
     set multiplot layout 1,1
     set rmargin 30
     set key at screen 1, graph 1  
     
-    count = 1
-    do for [ file in "${list_cnt0[@]}"]{  
-      set key at 64, ymax
-      plot file u 13:7 title file with linespoints linestyle count
-      count = count + 1
-      ymax = ymax - offset
-      
+    count = 10
+    do for [ file in "${list_nrc[@]}"]{  
+      set xtics (file count)
+      plot file using (count):7:13 with labels point  pt 7 offset char 6,-0.1 notitle
+      count = count + spacing_x
     }
 EOF
 #
 cp *.pdf ../Graphs
 cd ..
+#
+printf "Finished generating graphs!\n"
 #
 #set multiplot
 #plot file u 13:5 title file with linespoints linestyle count
