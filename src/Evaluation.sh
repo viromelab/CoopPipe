@@ -111,7 +111,7 @@ if [[ -d "$REF_DIR" ]] && [[ -d "$D_PATH" ]];
   
   CONSENSUS="$(pwd)/$D_PATH/consensus"
 
-  echo "File	Time(s)	SNPs	AvgIdentity	NCD	NRC	Mem(GB)	%CPU	Nr contigs	Metagenomic_analysis	Metagenomic_classification	Coverage	SNP_mutations_DS	Contamination_ds" > Results/total_stats.tsv
+  echo "File	Virus	Time(s)	SNPs	AvgIdentity	NCD	NRC	Mem(GB)	%CPU	Nr contigs	Metagenomic_analysis	Metagenomic_classification	Name tool" > Results/total_stats.tsv
 #
   for REF_FILE in `ls $(pwd)/$REF_DIR/*.fa` #for each fasta file in curr dir
     do 
@@ -182,6 +182,7 @@ if [[ -d "$REF_DIR" ]] && [[ -d "$D_PATH" ]];
       #ACCURACY=$(echo $TMP \/ $TBASES |bc -l | xargs printf %.3f)
       
       NAME_TOOL="$(cut -d'-' -f1 <<< $D_PATH/$file_wout_extension)"
+      NAME_TOOL="$(cut -d'/' -f2 <<< $NAME_TOOL)"
       
       DOES_ANALYSIS="?"
       DOES_CLASSIFICATION="?"      
@@ -257,7 +258,7 @@ if [[ -d "$REF_DIR" ]] && [[ -d "$D_PATH" ]];
       MEM=$(echo $MEM \/ 1048576 |bc -l | xargs printf %.3f)
       
     #file	exec_time	snps	avg_identity	NCD	NRC	max_mem	cpu_avg	nr_contigs_reconstructed	metagenomic_analysis	metagenomic_classification	coverage	snp_dataset
-    echo "$file	$TIME	$SNPS	$IDEN	$NCD	$NRC	$MEM	$CPU_P	$NR_SPECIES	$DOES_ANALYSIS	$DOES_CLASSIFICATION	$coverage	$snp_ds	$cnt_ds" >> Results/total_stats.tsv   
+    echo "$file	$name_vir_ref	$TIME	$SNPS	$IDEN	$NCD	$NRC	$MEM	$CPU_P	$NR_SPECIES	$DOES_ANALYSIS	$DOES_CLASSIFICATION	$NAME_TOOL" >> Results/total_stats.tsv   
     fi 
      
      
