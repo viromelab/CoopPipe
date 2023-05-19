@@ -506,7 +506,7 @@ CREATE_FINAL_CONSENSUS () {
     do
     tmp="$(cut -d'.' -f1 <<< $file)"
     name_vir="$(cut -d'-' -f2 <<< $tmp)"    
-    cons -sequence $file -outseq cooppipeemboss-$name_vir-consensus.fa
+    #cons -sequence $file -outseq cooppipeemboss-$name_vir-consensus.fa
     python3 $CURR_PATH/generate_consensus.py -i $file -o cooppipealt-$name_vir-consensus.fa
   done
   rm *-combined.fa

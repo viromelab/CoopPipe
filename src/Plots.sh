@@ -90,7 +90,7 @@ gnuplot << EOF
     
     spacing_x = 30
     ymax = 100.1
-    ymin = 98.5
+    ymin = 95
     offset = ( ymax - ymin ) / 15.0    
     set yrange [ymin:ymax]
     set xrange [0:$nr_virus * spacing_x]
@@ -121,7 +121,7 @@ gnuplot << EOF
     set datafile separator "\t"
     
     spacing_x = 30
-    ymax = 0.3
+    ymax = 0.6
     ymin = 0
     offset = ( ymax - ymin ) / 15.0    
     set yrange [ymin:ymax]
