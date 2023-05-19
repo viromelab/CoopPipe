@@ -29,8 +29,8 @@ for virus in "${VIRUSES_AVAILABLE[@]}"
   cp ../Results/total_stats.tsv .
  
   sort -k5 -r -n total_stats.tsv > tmp.tsv
-  cooppipe=$(cat tmp.tsv | tr ',' '.' | grep "${virus}" | grep -w "cooppipe*" > "${virus}")
-  best_tool=$(cat tmp.tsv | tail -n +2 | tr ',' '.'  | grep "${virus}" | grep -w --invert-match "cooppipe*" | head -1 >> "${virus}")
+  cooppipe=$(cat tmp.tsv | tr ',' '.' | grep "${virus}" | grep -w "cooppipealt-$virus-consensus.fa" > "${virus}")
+  best_tool=$(cat tmp.tsv | tr ',' '.'  | grep "${virus}" | grep -w --invert-match "cooppipealt-$virus-consensus.fa" | head -1 >> "${virus}")
   
   if [ -s ${virus} ];
     then
@@ -43,8 +43,8 @@ for virus in "${VIRUSES_AVAILABLE[@]}"
   cp ../Results/total_stats.tsv .
  
   sort -k6 -n total_stats.tsv > tmp.tsv
-  cooppipe=$(cat tmp.tsv | tr ',' '.' | grep "${virus}" | grep -w "cooppipe*" > "${virus}")
-  best_tool=$(cat tmp.tsv | tail -n +2 | tr ',' '.'  | grep "${virus}" | grep -w --invert-match "cooppipe*" | head -1 >> "${virus}")
+  cooppipe=$(cat tmp.tsv | tr ',' '.' | grep "${virus}" | grep -w "cooppipealt-$virus-consensus.fa" > "${virus}")
+  best_tool=$(cat tmp.tsv | tail -n +2 | tr ',' '.'  | grep "${virus}" | grep -w --invert-match "cooppipealt-$virus-consensus.fa" | head -1 >> "${virus}")
   
   cd ..
   
@@ -52,8 +52,8 @@ for virus in "${VIRUSES_AVAILABLE[@]}"
   cp ../Results/total_stats.tsv .
  
   sort -k7 -n total_stats.tsv > tmp.tsv
-  cooppipe=$(cat tmp.tsv | tr ',' '.' | grep "${virus}" | grep -w "cooppipe*" > "${virus}")
-  best_tool=$(cat tmp.tsv | tail -n +2 | tr ',' '.'  | grep "${virus}" | grep -w --invert-match "cooppipe*" | head -1 >> "${virus}")
+  cooppipe=$(cat tmp.tsv | tr ',' '.' | grep "${virus}" | grep -w "cooppipealt-$virus-consensus.fa" > "${virus}")
+  best_tool=$(cat tmp.tsv | tail -n +2 | tr ',' '.'  | grep "${virus}" | grep -w --invert-match "cooppipealt-$virus-consensus.fa" | head -1 >> "${virus}")
  
   cd ..  
 done
@@ -89,8 +89,8 @@ gnuplot << EOF
     set datafile separator "\t"
     
     spacing_x = 30
-    ymax = 100.5
-    ymin = 94
+    ymax = 100.1
+    ymin = 98.5
     offset = ( ymax - ymin ) / 15.0    
     set yrange [ymin:ymax]
     set xrange [0:$nr_virus * spacing_x]
@@ -99,7 +99,7 @@ gnuplot << EOF
     set ylabel "Average Identity"
     set xlabel "Viruses"
     set multiplot layout 1,1
-    set rmargin 30
+    set rmargin 5
     set key at screen 1, graph 1  
     
     count = 10
@@ -121,7 +121,7 @@ gnuplot << EOF
     set datafile separator "\t"
     
     spacing_x = 30
-    ymax = 1.05
+    ymax = 0.3
     ymin = 0
     offset = ( ymax - ymin ) / 15.0    
     set yrange [ymin:ymax]
@@ -131,7 +131,7 @@ gnuplot << EOF
     set ylabel "NCD"
     set xlabel "Viruses"
     set multiplot layout 1,1
-    set rmargin 30
+    set rmargin 5
     set key at screen 1, graph 1  
     
     count = 10
@@ -152,7 +152,7 @@ gnuplot << EOF
     set datafile separator "\t"
     
     spacing_x = 30
-    ymax = 0.3
+    ymax = 0.15
     ymin = 0
     offset = ( ymax - ymin ) / 15.0    
     set yrange [ymin:ymax]
@@ -162,7 +162,7 @@ gnuplot << EOF
     set ylabel "NCD"
     set xlabel "Viruses"
     set multiplot layout 1,1
-    set rmargin 30
+    set rmargin 5
     set key at screen 1, graph 1  
     
     count = 10
