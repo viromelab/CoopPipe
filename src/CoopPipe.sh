@@ -507,10 +507,16 @@ CREATE_FINAL_CONSENSUS () {
     tmp="$(cut -d'.' -f1 <<< $file)"
     name_vir="$(cut -d'-' -f2 <<< $tmp)"    
     #cons -sequence $file -outseq cooppipeemboss-$name_vir-consensus.fa
-    python3 $CURR_PATH/generate_consensus.py -i $file -o cooppipealt-$name_vir-consensus.fa
+    #python3 $CURR_PATH/generate_consensus.py -i $file -o cooppipealt-$name_vir-consensus.fa
+    python3 $CURR_PATH/weighted_generate_consensus.py -i $file -k 1 2 4 15 30 100 200 1000
+    python3 $CURR_PATH/generate_consensus.py -i new.fa -o cooppipeweighted-$name_vir-consensus.fa
+
   done
-  rm *-combined.fa
-  rm multifasta-*.fa
+  #mkdir combined
+  #mv *-combined.fa combined
+  #mkdir multifasta
+  #mv multifasta-*.fa multifasta
+
   cd $CURR_PATH
   conda activate base
 }

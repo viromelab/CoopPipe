@@ -3,9 +3,9 @@
 declare -a VIRUSES_AVAILABLE=("B19V" "BuV" "CuV" "HBoV" "AAV" "BKPyV" "JCPyV" "KIPyV"
                     "WUPyV" "MCPyV" "HPyV6" "HPyV7" "TSPyV" "HPyV9" "MWPyV"
                     "STLPyV" "HPyV12" "NJPyV" "LIPyV" "SV40" "TTV" "TTVmid"
-                    "TTVmin" "HAV" "HBV" "HCV" "HDV" "HEV" "SENV" "HPV2"
-                    "HPV6" "HPV11" "HPV16" "HPV18" "HPV31" "HPV39" "HPV45"
-                    "HPV51" "HPV56" "HPV58" "HPV59" "HPV68" "HPV77" "HSV-1"
+                    "TTVmin" "HAV" "HBV" "HCV" "HDV" "HEV" "SENV" "HPV11" "HPV16" 
+                    "HPV18" "HPV31" "HPV39" "HPV45" "HPV51" "HPV56" "HPV58" "HPV59"
+                    "HPV68" "HPV77""HPV2" "HPV6"  "HSV-1"
                     "HSV-2" "VZV" "EBV" "HCMV" "HHV6" "HHV7" "KSHV" "ReDoV"
                     "VARV" "MPXV" "EV" "SARS2" "HERV" "MT");
 #
@@ -29,8 +29,8 @@ for virus in "${VIRUSES_AVAILABLE[@]}"
   cp ../Results/total_stats.tsv .
  
   sort -k5 -r -n total_stats.tsv > tmp.tsv
-  cooppipe=$(cat tmp.tsv | tr ',' '.' | grep "${virus}" | grep -w "cooppipealt-$virus-consensus.fa" > "${virus}")
-  best_tool=$(cat tmp.tsv | tr ',' '.'  | grep "${virus}" | grep -w --invert-match "cooppipealt-$virus-consensus.fa" | head -1 >> "${virus}")
+  cooppipe=$(cat tmp.tsv | tr ',' '.' | grep -w "${virus}" | grep -w "cooppipeweighted-$virus-consensus.fa" > "${virus}")
+  best_tool=$(cat tmp.tsv | tr ',' '.'  | grep -w "${virus}" | grep -w --invert-match "cooppipeweighted-$virus-consensus.fa" | head -1 >> "${virus}")
   
   if [ -s ${virus} ];
     then
@@ -43,8 +43,8 @@ for virus in "${VIRUSES_AVAILABLE[@]}"
   cp ../Results/total_stats.tsv .
  
   sort -k6 -n total_stats.tsv > tmp.tsv
-  cooppipe=$(cat tmp.tsv | tr ',' '.' | grep "${virus}" | grep -w "cooppipealt-$virus-consensus.fa" > "${virus}")
-  best_tool=$(cat tmp.tsv | tail -n +2 | tr ',' '.'  | grep "${virus}" | grep -w --invert-match "cooppipealt-$virus-consensus.fa" | head -1 >> "${virus}")
+  cooppipe=$(cat tmp.tsv | tr ',' '.' | grep -w "${virus}" | grep -w "cooppipeweighted-$virus-consensus.fa" > "${virus}")
+  best_tool=$(cat tmp.tsv | tail -n +2 | tr ',' '.'  | grep -w "${virus}" | grep -w --invert-match "cooppipeweighted-$virus-consensus.fa" | head -1 >> "${virus}")
   
   cd ..
   
@@ -52,8 +52,8 @@ for virus in "${VIRUSES_AVAILABLE[@]}"
   cp ../Results/total_stats.tsv .
  
   sort -k7 -n total_stats.tsv > tmp.tsv
-  cooppipe=$(cat tmp.tsv | tr ',' '.' | grep "${virus}" | grep -w "cooppipealt-$virus-consensus.fa" > "${virus}")
-  best_tool=$(cat tmp.tsv | tail -n +2 | tr ',' '.'  | grep "${virus}" | grep -w --invert-match "cooppipealt-$virus-consensus.fa" | head -1 >> "${virus}")
+  cooppipe=$(cat tmp.tsv | tr ',' '.' | grep -w "${virus}" | grep -w "cooppipeweighted-$virus-consensus.fa" > "${virus}")
+  best_tool=$(cat tmp.tsv | tail -n +2 | tr ',' '.'  | grep -w "${virus}" | grep -w --invert-match "cooppipeweighted-$virus-consensus.fa" | head -1 >> "${virus}")
  
   cd ..  
 done
@@ -121,7 +121,7 @@ gnuplot << EOF
     set datafile separator "\t"
     
     spacing_x = 30
-    ymax = 0.6
+    ymax = 1
     ymin = 0
     offset = ( ymax - ymin ) / 15.0    
     set yrange [ymin:ymax]

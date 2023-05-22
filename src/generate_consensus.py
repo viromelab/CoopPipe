@@ -100,7 +100,7 @@ def generate_consensus (output):
 
     file = open(output, "w")
 
-    file.write(">CoopPipe_consensus\n" + ''.join(consensus) )
+    file.write(">CoopPipe_consensus\n" + ''.join(consensus) + "\n" )
 
 
 
