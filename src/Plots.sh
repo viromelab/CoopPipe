@@ -19,7 +19,7 @@ mkdir avg_identity
 mkdir NCD
 mkdir NRC
 #
-nr_virus=4;
+nr_virus=0;
 #
 for virus in "${VIRUSES_AVAILABLE[@]}" 
   do
@@ -31,6 +31,11 @@ for virus in "${VIRUSES_AVAILABLE[@]}"
   sort -k5 -r -n total_stats.tsv > tmp.tsv
   cooppipe=$(cat tmp.tsv | tr ',' '.' | grep -w "${virus}" | grep -w "cooppipeweighted-$virus-consensus.fa" > "${virus}-cooppipe")
   best_tool=$(cat tmp.tsv | tail -n +2 | tr ',' '.'  | grep -w "${virus}" | grep -w --invert-match "cooppipeweighted-$virus-consensus.fa" | head -1 > "${virus}-not")
+  
+  if [ -s ${virus}-cooppipe ];
+    then
+    nr_virus=$(echo $nr_virus + 1 |bc -l)
+  fi
 
   
   cd ..
