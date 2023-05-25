@@ -19,7 +19,7 @@ mkdir avg_identity
 mkdir NCD
 mkdir NRC
 #
-nr_virus=0;
+nr_virus=4;
 #
 for virus in "${VIRUSES_AVAILABLE[@]}" 
   do
@@ -29,31 +29,27 @@ for virus in "${VIRUSES_AVAILABLE[@]}"
   cp ../Results/total_stats.tsv .
  
   sort -k5 -r -n total_stats.tsv > tmp.tsv
-  cooppipe=$(cat tmp.tsv | tr ',' '.' | grep -w "${virus}" | grep -w "cooppipeweighted-$virus-consensus.fa" > "${virus}")
-  best_tool=$(cat tmp.tsv | tr ',' '.'  | grep -w "${virus}" | grep -w --invert-match "cooppipeweighted-$virus-consensus.fa" | head -1 >> "${virus}")
-  
-  if [ -s ${virus} ];
-    then
-    nr_virus=$(echo $nr_virus + 1 |bc -l)
-  fi
-  
-  cd ..
-  
-  cd NRC
-  cp ../Results/total_stats.tsv .
- 
-  sort -k6 -n total_stats.tsv > tmp.tsv
-  cooppipe=$(cat tmp.tsv | tr ',' '.' | grep -w "${virus}" | grep -w "cooppipeweighted-$virus-consensus.fa" > "${virus}")
-  best_tool=$(cat tmp.tsv | tail -n +2 | tr ',' '.'  | grep -w "${virus}" | grep -w --invert-match "cooppipeweighted-$virus-consensus.fa" | head -1 >> "${virus}")
+  cooppipe=$(cat tmp.tsv | tr ',' '.' | grep -w "${virus}" | grep -w "cooppipeweighted-$virus-consensus.fa" > "${virus}-cooppipe")
+  best_tool=$(cat tmp.tsv | tail -n +2 | tr ',' '.'  | grep -w "${virus}" | grep -w --invert-match "cooppipeweighted-$virus-consensus.fa" | head -1 > "${virus}-not")
+
   
   cd ..
   
   cd NCD
   cp ../Results/total_stats.tsv .
  
-  sort -k7 -n total_stats.tsv > tmp.tsv
-  cooppipe=$(cat tmp.tsv | tr ',' '.' | grep -w "${virus}" | grep -w "cooppipeweighted-$virus-consensus.fa" > "${virus}")
-  best_tool=$(cat tmp.tsv | tail -n +2 | tr ',' '.'  | grep -w "${virus}" | grep -w --invert-match "cooppipeweighted-$virus-consensus.fa" | head -1 >> "${virus}")
+  sort -k6 -n total_stats.tsv > tmp.tsv
+  cooppipe=$(cat tmp.tsv | tr ',' '.' | grep -w "${virus}" | grep -w "cooppipeweighted-$virus-consensus.fa" > "${virus}-cooppipe")
+  best_tool=$(cat tmp.tsv | tail -n +2 | tr ',' '.'  | grep -w "${virus}" | grep -w --invert-match "cooppipeweighted-$virus-consensus.fa" | head -1 > "${virus}-not")
+  
+  cd ..
+  
+  cd NRC
+  cp ../Results/total_stats.tsv .
+ 
+    sort -k7 -n total_stats.tsv > tmp.tsv
+  cooppipe=$(cat tmp.tsv | tr ',' '.' | grep -w "${virus}" | grep -w "cooppipeweighted-$virus-consensus.fa" > "${virus}-cooppipe")
+  best_tool=$(cat tmp.tsv | tail -n +2 | tr ',' '.'  | grep -w "${virus}" | grep -w --invert-match "cooppipeweighted-$virus-consensus.fa" | head -1 > "${virus}-not")
  
   cd ..  
 done
@@ -89,7 +85,7 @@ gnuplot << EOF
     set datafile separator "\t"
     
     spacing_x = 30
-    ymax = 100.1
+    ymax = 101
     ymin = 95
     offset = ( ymax - ymin ) / 15.0    
     set yrange [ymin:ymax]
@@ -100,14 +96,28 @@ gnuplot << EOF
     set xlabel "Viruses"
     set multiplot layout 1,1
     set rmargin 5
-    set key at screen 1, graph 1  
+    set key at screen 1, graph 1 
     
     count = 10
+    aux = 0
     do for [ file in "${list_avg[@]}"]{  
-      set xtics (file count)
-      plot file using (count):5:13 with labels point  pt 7 offset char 6,-0.1 notitle
-      count = count + spacing_x
+    
+      pos = strstrt(file,"-")
+      virus = file[0:pos-1]
+     
+      set xtics (virus count)
+      
       ymax = ymax - offset
+      
+      if(aux == 0){
+        aux = aux + 1;
+        plot file using (count):5:13 with labels point pt 7 lc "red" offset char 6,-0.1 notitle
+      } else {
+  
+        plot file using (count):5:13 with labels point pt 7 lc "black" offset char 6,-0.1 notitle
+        count = count + spacing_x
+        aux = 0
+      }
     }
 EOF
 #
@@ -121,7 +131,7 @@ gnuplot << EOF
     set datafile separator "\t"
     
     spacing_x = 30
-    ymax = 1
+    ymax = 0.9
     ymin = 0
     offset = ( ymax - ymin ) / 15.0    
     set yrange [ymin:ymax]
@@ -132,13 +142,28 @@ gnuplot << EOF
     set xlabel "Viruses"
     set multiplot layout 1,1
     set rmargin 5
-    set key at screen 1, graph 1  
+    set key at screen 1, graph 1 
     
     count = 10
+    aux = 0
     do for [ file in "${list_ncd[@]}"]{  
-      set xtics (file count)
-      plot file using (count):6:13 with labels point  pt 7 offset char 6,-0.1 notitle
-      count = count + spacing_x
+    
+      pos = strstrt(file,"-")
+      virus = file[0:pos-1]
+     
+      set xtics (virus count)
+      
+      ymax = ymax - offset
+      
+      if(aux == 0){
+        aux = aux + 1;
+        plot file using (count):6:13 with labels point pt 7 lc "red" offset char 6,-0.1 notitle
+      } else {
+  
+        plot file using (count):6:13 with labels point pt 7 lc "black" offset char 6,-0.1 notitle
+        count = count + spacing_x
+        aux = 0
+      }
     }
 EOF
 #
@@ -159,17 +184,32 @@ gnuplot << EOF
     set xrange [0:$nr_virus * spacing_x]
    
     set ytics auto
-    set ylabel "NCD"
+    set ylabel "NRC"
     set xlabel "Viruses"
     set multiplot layout 1,1
     set rmargin 5
-    set key at screen 1, graph 1  
+    set key at screen 1, graph 1 
     
     count = 10
-    do for [ file in "${list_nrc[@]}"]{  
-      set xtics (file count)
-      plot file using (count):7:13 with labels point  pt 7 offset char 6,-0.1 notitle
-      count = count + spacing_x
+    aux = 0
+    do for [ file in "${list_ncd[@]}"]{  
+    
+      pos = strstrt(file,"-")
+      virus = file[0:pos-1]
+     
+      set xtics (virus count)
+      
+      ymax = ymax - offset
+      
+      if(aux == 0){
+        aux = aux + 1;
+        plot file using (count):7:13 with labels point pt 7 lc "red" offset char 6,-0.1 notitle
+      } else {
+  
+        plot file using (count):7:13 with labels point pt 7 lc "black" offset char 6,-0.1 notitle
+        count = count + spacing_x
+        aux = 0
+      }
     }
 EOF
 #
