@@ -760,12 +760,14 @@ if [[ "$INSTALL_SPECIFIC" -eq "1" ]];
   conda create -n kraken -y
   conda activate kraken
   conda install kraken2 -y
+  lzma -d VDB.fa.lzma 
   kraken2-build --db krakendb --download-taxonomy --use-ftp
   kraken2-build --db krakendb --add-to-library VDB.fa
   kraken2-build --db krakendb --build --threads $THREADS
   conda install -c cobilab -y gto
+  
+  #kraken2 --threads $THREADS --db /opt/storage2/db/kraken2/standard --output ERR2513180.output.txt --report ERR2513180.report.txt --paired ERR2513180_1.fastq.gz ERR2513180_2.fastq.gz
   conda activate base
-  kraken2 --threads $THREADS --db /opt/storage2/db/kraken2/standard --output ERR2513180.output.txt --report ERR2513180.report.txt --paired ERR2513180_1.fastq.gz ERR2513180_2.fastq.gz
   #centrifuge
   conda create -n centrifuge -y
   conda activate centrifuge
@@ -1082,24 +1084,25 @@ CPU_perc	$total_cpu%" > qure-time.txt
     rm -rf *.fa* 
     for virus in "${VIRUSES[@]}"
       do
-      rm -rf files
-      mkdir files
-      echo "file" > files/samples
-      cd files
+      rm -rf dataset
+      mkdir dataset
+      echo "dataset" > dataset/samples
+      cd dataset
       rm -rf output
       mkdir output
       cp $READS1 $READS2 .
-      gzip -cvf $aux_READS1 > file_R1.fastq.gz
-      gzip -cvf $aux_READS2 > file_R2.fastq.gz
+      gzip -cvf $aux_READS1 > dataset_R1.fastq.gz
+      gzip -cvf $aux_READS2 > dataset_R2.fastq.gz
       cd ..
       cp ${virus} reconstruction_files
       printf "$virus \n\n"
       aux_virus="$(cut -d'.' -f1 <<< $virus)"
       aux_virus="$(echo $aux_virus | awk -F/ '{print $NF}')"
 
-      /bin/time -f "TIME\t%e\nMEM\t%M\nCPU_perc\t%P" -o qvg-$aux_virus-time.txt ./QVG.sh -r ./reconstruction_files/${aux_virus}.fa -samples-list ./files/samples -s ./files -o ./files/output -annot yes -np $THREADS
-      cat files/output/samples_multifasta_* > files/output/qvg-${aux_virus}.fasta      
-      cp files/output/qvg-${aux_virus}.fasta .
+      /bin/time -f "TIME\t%e\nMEM\t%M\nCPU_perc\t%P" -o qvg-$aux_virus-time.txt ./QVG.sh -r ./reconstruction_files/${aux_virus}.fa -samples-list ./dataset/samples -s ./dataset -o ./dataset/output -annot yes -np $THREADS
+  
+      cat dataset/output/samples_multifasta_* > dataset/output/qvg-${aux_virus}.fasta      
+      cp dataset/output/qvg-${aux_virus}.fasta .
     done
     cat *.fasta > qvg-reconstructed.fa
     rm -rf *.fasta
