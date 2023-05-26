@@ -13,10 +13,10 @@ rm -rf Graphs
 mkdir Graphs
 #
 rm -rf avg_identity
-rm -rf NCD
+rm -rf NCSD
 rm -rf NRC
 mkdir avg_identity
-mkdir NCD
+mkdir NCSD
 mkdir NRC
 #
 nr_virus=0;
@@ -40,7 +40,7 @@ for virus in "${VIRUSES_AVAILABLE[@]}"
   
   cd ..
   
-  cd NCD
+  cd NCSD
   cp ../Results/total_stats.tsv .
  
   sort -k6 -n total_stats.tsv > tmp.tsv
@@ -64,7 +64,7 @@ find . -type f -empty -delete
 rm *.tsv
 cd ..
 #
-cd NCD
+cd NCSD
 find . -type f -empty -delete
 rm *.tsv
 cd ..
@@ -75,7 +75,7 @@ rm *.tsv
 cd ..
 #
 list_avg=($(ls avg_identity))  
-list_ncd=($(ls NCD))
+list_ncsd=($(ls NCSD))
 list_nrc=($(ls NRC))
 #
 #  
@@ -127,23 +127,23 @@ gnuplot << EOF
 EOF
 #
 cp *.pdf ../Graphs
-cd ../NCD
+cd ../NCSD
 #
 gnuplot << EOF
     reset
     set terminal pdfcairo enhanced color font 'Verdade,9'
-    set output "NCD.pdf"
+    set output "NCSD.pdf"
     set datafile separator "\t"
     
     spacing_x = 30
-    ymax = 0.9
+    ymax = 1
     ymin = 0
     offset = ( ymax - ymin ) / 15.0    
     set yrange [ymin:ymax]
     set xrange [0:$nr_virus * spacing_x]
    
     set ytics auto
-    set ylabel "NCD"
+    set ylabel "NCSD"
     set xlabel "Viruses"
     set multiplot layout 1,1
     set rmargin 5
@@ -151,7 +151,7 @@ gnuplot << EOF
     
     count = 10
     aux = 0
-    do for [ file in "${list_ncd[@]}"]{  
+    do for [ file in "${list_ncsd[@]}"]{  
     
       pos = strstrt(file,"-")
       virus = file[0:pos-1]
@@ -197,7 +197,7 @@ gnuplot << EOF
     
     count = 10
     aux = 0
-    do for [ file in "${list_ncd[@]}"]{  
+    do for [ file in "${list_nrc[@]}"]{  
     
       pos = strstrt(file,"-")
       virus = file[0:pos-1]
