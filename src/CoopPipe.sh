@@ -237,7 +237,7 @@ CLASSIFY_INPUT () {
         then
         NAME="$(cut -d'	' -f1 <<< $line)"
         ID="$(cut -d'	' -f3 <<< $line)"
-        gto_fasta_extract_read_by_pattern -p $ID < VDB.fa > $NAME.fa
+        gto_fasta_extract_read_by_pattern -p $ID < VDB.fa | sed 's|/||g' > $NAME.fa
         mv $NAME.fa $OUTPUT_DIR
       fi 
     done < best-viral-metagenomics.txt
@@ -277,7 +277,7 @@ CLASSIFY_INPUT () {
           if [[ "$ID" ]];
             then
             printf "$ID \n"
-            gto_fasta_extract_read_by_pattern -p $ID < VDB.fa > $VIRUS.fa
+            gto_fasta_extract_read_by_pattern -p $ID < VDB.fa | sed 's|/||g' > $VIRUS.fa
             mv $VIRUS.fa $OUTPUT_DIR
           fi
         done
@@ -312,7 +312,7 @@ CLASSIFY_INPUT () {
         if [[ "$ID" ]];
           then
           printf "$ID \n"
-          gto_fasta_extract_read_by_pattern -p $ID < VDB.fa > $VIRUS.fa
+          gto_fasta_extract_read_by_pattern -p $ID < VDB.fa | sed 's|/||g' > $VIRUS.fa
           mv $VIRUS.fa $OUTPUT_DIR
         fi
       done   
@@ -1210,7 +1210,7 @@ CPU_perc	$total_cpu%" > qvg-time.txt
     cd ../src/
     cp ../../VDB.fa .
 
-    /bin/time -f "TIME\t%e\nMEM\t%M\nCPU_perc\t%P" -o tracespipe-time.txt ./TRACESPipe.sh --run-meta --run-all-v-alig --very-sensitive -t $THREADS #--cache 10
+    /bin/time -f "TIME\t%e\nMEM\t%M\nCPU_perc\t%P" -o tracespipe-time.txt ./TRACESPipe.sh --run-meta --run-all-v-alig --very-sensitive -t $THREADS --cache 10
     cp tracespipe-time.txt ../
     cd ../output_data/TRACES_viral_consensus
     cat *.fa > ../../tracespipe-reconstructed.fa     
@@ -1275,30 +1275,29 @@ CPU_perc	$total_cpu%" > qvg-time.txt
   #
   if [[ "$VIRGENA" -eq "1" ]]; #unchanged
     then
-    printf "Reconstructing with VirGenA\n\n"
-    eval "$(conda shell.bash hook)"
-    conda activate java-env
-    cd release_v1.4
-    chmod +x ./tools/vsearch
-
+  printf "Reconstructing with VirGenA\n\n"
+  eval "$(conda shell.bash hook)"
+  conda activate java-env
+  cd release_v1.4
+  chmod +x ./tools/vsearch
+    
     for virus in "${VIRUSES[@]}"
     do
-      rm -rf $aux_READS1
-      rm -rf $aux_READS2
+      #rm -rf ${dataset}_*.fq
+      rm -rf ${virus}.fa
       rm -rf *.gz
-
+      
       cp $READS1 $READS2 .
       cp ${virus} .
-      aux_virus="$(cut -d'.' -f1 <<< $virus)"
-      aux_virus="$(echo $aux_virus | awk -F/ '{print $NF}')"
-
-      gzip $aux_READS1
-      gzip $aux_READS2
-
-
+    
+      gzip *.fq
+      
       #rm -rf $dataset-$virus 
       #mkdir $dataset-$virus
-
+      
+      aux_virus="$(cut -d'.' -f1 <<< $virus)"
+      aux_virus="$(echo $aux_virus | awk -F/ '{print $NF}')"
+    
       echo "<config>
     <Data>
         <pathToReads1>$aux_READS1.gz</pathToReads1>
@@ -1306,7 +1305,7 @@ CPU_perc	$total_cpu%" > qvg-time.txt
         <InsertionLength>1000</InsertionLength>
     </Data>
     <Reference>${aux_virus}.fa</Reference>
-    <OutPath>./res/new</OutPath>
+    <OutPath>./res/$aux_virus</OutPath>
     <ThreadNumber>-1</ThreadNumber>
 	<BatchSize>1000</BatchSize>
     <ReferenceSelector>
@@ -1374,17 +1373,19 @@ CPU_perc	$total_cpu%" > qvg-time.txt
         <Debug>false</Debug>
     </Postprocessor>
 </config>" > conf.xml
-
-
-
+    
+    
+    
     timeout --signal=SIGINT ${VIRGENA_TIMEOUT}m /bin/time -f "TIME\t%e\nMEM\t%M\nCPU_perc\t%P" -o virgena-$aux_virus-time.txt java -jar VirGenA.jar assemble -c conf.xml # config_test_linux.xml
     #java -jar VirGenA.jar map -c config.xml -r ../B19.fa -p1 ../DS1_1.fq -p2 ../DS1_2.fq
+    #rm $virus*
+    
     done
     cd res
     cat *_complete_genome_assembly.fasta > virgena-reconstructed.fa
     rm -rf *_complete_genome_assembly.fasta
-
-
+    
+    
     total_time=0
     total_mem=0
     total_cpu=0 
@@ -1409,16 +1410,18 @@ CPU_perc	$total_cpu%" > qvg-time.txt
     echo "TIME	$total_time
 MEM	$total_mem
 CPU_perc	$total_cpu%" > ../virgena-time.txt
-
+        
     mv ../virgena-time.txt $OUTPUT
-    rm -rf ../virgena-*-time.txt 
-    cp virgena-reconstructed.fa $OUTPUT 
+    mv virgena-reconstructed.fa $OUTPUT
+    rm -rf *
     cd ..
-
-    cd ..
-    conda activate base
+    rm virgena-time.txt
+    
+  cd ..
+  conda activate base
+  
     cd $CURR_PATH
-    cp -r references VirGenA
+    CLASSIFY_INPUT VirGenA $OUTPUT/virgena-reconstructed.fa
     mv VirGenA $OUTPUT
     ALIGN_TO_REF $OUTPUT/VirGenA $OUTPUT/virgena-reconstructed.fa virgena
     cd $TOOL_PATH

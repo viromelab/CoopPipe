@@ -28,7 +28,7 @@ for virus in "${VIRUSES_AVAILABLE[@]}"
   cd avg_identity
   cp ../Results/total_stats.tsv .
  
-  sort -k5 -r -n total_stats.tsv > tmp.tsv
+  sort -k5 -r -g total_stats.tsv > tmp.tsv
   cooppipe=$(cat tmp.tsv | tr ',' '.' | grep -w "${virus}" | grep -w "cooppipeweighted-$virus-consensus.fa" > "${virus}-cooppipe")
   best_tool=$(cat tmp.tsv | tail -n +2 | tr ',' '.'  | grep -w "${virus}" | grep -w --invert-match "cooppipeweighted-$virus-consensus.fa" | head -1 > "${virus}-not")
   
@@ -43,7 +43,7 @@ for virus in "${VIRUSES_AVAILABLE[@]}"
   cd NCSD
   cp ../Results/total_stats.tsv .
  
-  sort -k6 -n total_stats.tsv > tmp.tsv
+  sort -t$'\t' -k6 -n total_stats.tsv > tmp.tsv
   cooppipe=$(cat tmp.tsv | tr ',' '.' | grep -w "${virus}" | grep -w "cooppipeweighted-$virus-consensus.fa" > "${virus}-cooppipe")
   best_tool=$(cat tmp.tsv | tail -n +2 | tr ',' '.'  | grep -w "${virus}" | grep -w --invert-match "cooppipeweighted-$virus-consensus.fa" | head -1 > "${virus}-not")
   
@@ -52,7 +52,7 @@ for virus in "${VIRUSES_AVAILABLE[@]}"
   cd NRC
   cp ../Results/total_stats.tsv .
  
-    sort -k7 -n total_stats.tsv > tmp.tsv
+    sort -t$'\t' -k7 -g total_stats.tsv > tmp.tsv
   cooppipe=$(cat tmp.tsv | tr ',' '.' | grep -w "${virus}" | grep -w "cooppipeweighted-$virus-consensus.fa" > "${virus}-cooppipe")
   best_tool=$(cat tmp.tsv | tail -n +2 | tr ',' '.'  | grep -w "${virus}" | grep -w --invert-match "cooppipeweighted-$virus-consensus.fa" | head -1 > "${virus}-not")
  
