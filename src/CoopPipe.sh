@@ -35,6 +35,9 @@ BOWTIE2="1";
 MAFFT="1";
 MUSCLE="0";
 #
+EMBOSS="0";
+SELF="1";
+#
 READS1="";
 READS2="";
 CURR_PATH="$(pwd)";
@@ -107,6 +110,9 @@ SHOW_MENU () {
   echo "                                                                    ";
   echo " --msa  <STR>                  MSA to be used.                      ";
   echo "                               Options: mafft, muscle               ";
+  echo "                                                                    ";
+  echo " --consensus  <STR>            Consensus script to be used.         ";
+  echo "                               Options: self, emboss                ";
   echo "                                                                    ";
   echo " -o  <STR>, --output <STR>     Output folder name,                  ";
   echo "                                                                    ";
@@ -508,9 +514,17 @@ CREATE_FINAL_CONSENSUS () {
     name_vir="$(cut -d'-' -f2 <<< $tmp)"    
     #cons -sequence $file -outseq cooppipeemboss-$name_vir-consensus.fa
     #python3 $CURR_PATH/generate_consensus.py -i $file -o cooppipealt-$name_vir-consensus.fa
-    python3 $CURR_PATH/weighted_generate_consensus.py -i $file -k 1 2 4 15 30 100 200 1000
-    python3 $CURR_PATH/generate_consensus.py -i new.fa -o cooppipeweighted-$name_vir-consensus.fa
-
+    if [[ "$EMBOSS" -eq "1" ]];
+      then
+      cons -sequence $file -outseq cooppipe-$name_vir-consensus.fa
+    
+    fi
+    
+    if [[ "$SELF" -eq "1" ]];
+      then
+      python3 $CURR_PATH/weighted_generate_consensus.py -i $file -v $name_vir -k 1 2 4 15 30 100 200 1000
+      python3 $CURR_PATH/generate_consensus.py -i new.fa -o cooppipe-$name_vir-consensus.fa
+    fi
   done
   #mkdir combined
   #mv *-combined.fa combined
@@ -685,6 +699,17 @@ while [[ $# -gt 0 ]]
         then
         MUSCLE="1"
         MAFFT="0"  
+      fi     
+      shift 2;
+    ;;
+    --consensus)
+      TMP="$2";
+      TMP=$(echo "$TMP" | tr '[:upper:]' '[:lower:]')
+
+      if [[ "$TMP" == "emboss" ]];
+        then
+        EMBOSS="1"
+        SELF="0"  
       fi     
       shift 2;
     ;;

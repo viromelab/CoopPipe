@@ -6,25 +6,19 @@ dict_content = {}
 list_correctness=[]
 list_last_values=[]
 
-
-
-def add_to_dict(key, val, dict):
+def add_to_dict(key, val, dict): #adds element to a dictionary with a certain val; creates element if it doesn't exist
 
     if key in dict:
         # append the new number to the existing array at this slot
-        #print("adding to dict " , dict.get(key))
         dict[key] = dict.get(key) + val
     else:
         # create a new array in this slot
-        #print(dict_content.get(key))
-        #print(dict_content)
         dict[key] = val
         if dict == dict_content:
             list_correctness.append([])
             list_last_values.append([])
-        #print("added new key ", key)
 
-def read_file (path):
+def read_file (path): #read file and add it to a dictionary
 
     file = open(path, "r")
     count = -1
@@ -32,38 +26,24 @@ def read_file (path):
     for line in file:
 
         if line[0] != ">":
-            #print("line strip  - ", line.strip("\n"))
-            #print(count)
             add_to_dict(count, line.strip("\n"), dict_content)
-            #print(dict_content)
         else:
             count += 1
-
-
-
-    #print(dict_content)
-
-
 
     file.close()
 
 
-def update_correctness(chosen, k):
+def update_correctness(chosen, k): #updates the list of correct values
     count = 0
 
-
     for i in list_correctness:
-        #print(list_last_values[count], count, chosen)
-        #print(list_correctness[count])
         if len(list_correctness[count]) == k:
             list_correctness[count].pop(0)
 
         if list_last_values[count][len(list_last_values[count]) -1] == chosen:
             list_correctness[count].append(1)
-            #print(1)
         else:
             list_correctness[count].append(0)
-            #print(0)
 
         count += 1
 
@@ -78,14 +58,10 @@ def generate_consensus (output, k):
     consensus = []
     keys_finished = []
 
-
-
     while finished < len(dict_content):
 
         dict_bases = {}
         for key in dict_content:
-            #print(key, finished)
-
             try:
                 base = dict_content.get(key)[count]
             except:
@@ -95,7 +71,6 @@ def generate_consensus (output, k):
 
 
             if base in list_bases: #check if it is one of the bases
-                #print(list_last_values[key], key, base)
                 if base == "a" or base == "A":
                     add_to_dict("A", sum(list_correctness[key]), dict_bases)
                     if len(list_last_values[key]) == k:
@@ -136,7 +111,6 @@ def generate_consensus (output, k):
                     list_last_values[key].pop(0)
                 list_last_values[key].append("N")
 
-        #print(dict_bases)
         try:
             max_val = max(dict_bases.values())
         except:
@@ -183,9 +157,10 @@ def generate_consensus (output, k):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description="Index",
-    usage="python3 weighted_generate_consensus.py -i <aligned multi-FASTA> -k <values of k>")
+    usage="python3 weighted_generate_consensus.py -i <aligned multi-FASTA> -v <Name virus> -k <values of k>")
 
     parser.add_argument("-i", help="Aligned multi-FASTA", type=str, required=True)
+    parser.add_argument("-v", help="Name of the virus.", type=str)
     parser.add_argument("-k", help="Values of k, separated by spaces", nargs="+", type=int, required=True)
     args = parser.parse_args()
 
@@ -195,17 +170,9 @@ if __name__ == '__main__':
 
     count = 0
     for i in args.k:
-        generate_consensus("tmp-" + str(count) + ".fa", i)
+        generate_consensus("tmp-" + args.v + "-" + str(i) + ".fa", i)
         count += 1
 
-    #generate_consensus("tmp-2.fa", 4)
-    #generate_consensus("tmp-3.fa", 15)
-    #generate_consensus("tmp-4.fa", 30)
-    #generate_consensus("tmp-5.fa", 200)
-    #generate_consensus("tmp-6.fa", 1000)
-    #generate_consensus("tmp-7.fa", 2)
-    #generate_consensus("tmp-8.fa", 100)
-
     os.system('cat tmp-*.fa > new.fa')
-    os.system('rm tmp-*.fa')
+    #os.system('rm tmp-*.fa')
 
