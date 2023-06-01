@@ -200,7 +200,8 @@ if [[ -d "$REF_DIR" ]] && [[ -d "$D_PATH" ]];
       
       #Relative compression (only reference models) C(X||Y)
       GeCo3 -rm 20:500:1:12:0.9/3:100:0.9 -rm 13:200:1:1:0.9/0:0:0 -lr 0.03 -hs 64 -r $file.seq $REF_FILE.seq
-      COMPRESSED_SIZE_W_REF=$(ls -l $REF_FILE.seq.co | cut -d' ' -f5)      
+      COMPRESSED_SIZE_W_REF_BYTES=$(ls -l $REF_FILE.seq.co | cut -d' ' -f5)    
+      COMPRESSED_SIZE_W_REF=$(echo "$COMPRESSED_SIZE_W_REF_BYTES * 8.0" | bc -l )       
       rm $REF_FILE.seq.co            
       FILE_SIZE=$(ls -l $file | cut -d' ' -f5)
      
