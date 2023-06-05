@@ -91,7 +91,7 @@ gnuplot << EOF
     
     spacing_x = 30
     ymax = 101
-    ymin = 95
+    ymin = 0
     offset = ( ymax - ymin ) / 15.0    
     set yrange [ymin:ymax]
     set xrange [0:$nr_virus * spacing_x]
@@ -182,7 +182,7 @@ gnuplot << EOF
     set datafile separator "\t"
     
     spacing_x = 30
-    ymax = 0.15
+    ymax = 1
     ymin = 0
     offset = ( ymax - ymin ) / 15.0    
     set yrange [ymin:ymax]
@@ -220,6 +220,8 @@ EOF
 #
 cp *.pdf ../Graphs
 cd ..
+#
+./Plots_k.sh
 #
 printf "Finished generating graphs!\n"
 #

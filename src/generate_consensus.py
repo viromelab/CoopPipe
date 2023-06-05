@@ -100,6 +100,8 @@ def generate_consensus (output):
 
     file = open(output, "w")
 
+    consensus[:len(dict_content.get(1))]
+
     file.write(">CoopPipe_consensus\n" + ''.join(consensus) + "\n" )
 
 

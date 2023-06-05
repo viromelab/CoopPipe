@@ -9,18 +9,18 @@ declare -a VIRUSES_AVAILABLE=("B19V" "BuV" "CuV" "HBoV" "AAV" "BKPyV" "JCPyV" "K
                     "HSV-2" "VZV" "EBV" "HCMV" "HHV6" "HHV7" "KSHV" "ReDoV"
                     "VARV" "MPXV" "EV" "SARS2" "HERV" "MT");
 #
-rm -rf Graphs
-mkdir Graphs
+rm -rf Graphs_k
+mkdir Graphs_k
 #
 nr_virus=0;
 #
-cd Graphs
-cp ../Results/total_stats.tsv .
+cd Graphs_k
+cp ../Results/total_stats_k.tsv .
 #
 for virus in "${VIRUSES_AVAILABLE[@]}" 
   do
   
-  sort -k3 -g total_stats.tsv > tmp.tsv
+  sort -k3 -g total_stats_k.tsv > tmp.tsv
   data=$(cat tmp.tsv | tr ',' '.' | grep -w "${virus}" > "$virus")
   
   if [ -s "${virus}" ];
@@ -47,7 +47,7 @@ for virus in "${VIRUSES_AVAILABLE[@]}"
       set rmargin 5
       set key at screen 1, graph 1 
       
-      plot "$virus" u 3:5 with linespoints notitle
+      plot "$virus" u 3:5 with linespoints lc 0 notitle
   
 EOF
     printf "2\n"
@@ -70,7 +70,7 @@ EOF
       set rmargin 5
       set key at screen 1, graph 1 
         
-      plot "$virus" u 3:6 with linespoints notitle
+      plot "$virus" u 3:6 with linespoints lc 0 notitle
   
 EOF
     printf "3\n"
@@ -93,7 +93,7 @@ EOF
       set rmargin 5
       set key at screen 1, graph 1 
         
-      plot "$virus" u 3:7 with linespoints notitle
+      plot "$virus" u 3:7 with linespoints lc 0 notitle
   
 EOF
   

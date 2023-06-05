@@ -99,13 +99,12 @@ if [[ -d "$REF_DIR" ]] && [[ -d "$D_PATH" ]];
   then
   eval "$(conda shell.bash hook)"
   conda activate evaluation
-  rm -rf Results
-  mkdir Results
+
   #cd Results
   
   CONSENSUS="$(pwd)/$D_PATH/consensus"
 
-  echo "File	Virus	K values	SNPs	AvgIdentity	NCSD	NRC" > Results/total_stats.tsv
+  echo "File	Virus	K values	SNPs	AvgIdentity	NCSD	NRC" > Results/total_stats_k.tsv
 #
   for REF_FILE in `ls $(pwd)/$REF_DIR/*.fa` #for each fasta file in curr dir
     do 
@@ -216,7 +215,7 @@ if [[ -d "$REF_DIR" ]] && [[ -d "$D_PATH" ]];
       MEM=$(echo $MEM \/ 1048576 |bc -l | xargs printf %.3f)
       
     #file	name_vir	k_val	snps	avg_identity	NCSD	NRC	max_mem	cpu_avg	nr_contigs_reconstructed	metagenomic_analysis	metagenomic_classification	coverage	snp_dataset
-    echo "$file	$name_vir_ref	$k_val	$SNPS	$IDEN	$NCSD	$NRC" >> Results/total_stats.tsv   
+    echo "$file	$name_vir_ref	$k_val	$SNPS	$IDEN	$NCSD	$NRC" >> Results/total_stats_k.tsv   
     fi 
      
      

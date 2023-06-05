@@ -480,6 +480,7 @@ PERFORM_MULTIPLE_ALIGNMENT () {
       #ls
       cat *-$aux_virus-consensus.fa > $aux_virus-combined.fa
       mafft --auto $aux_virus-combined.fa > multifasta-$aux_virus.fa
+      
     done
     cd $CURR_PATH
     conda activate base
@@ -522,7 +523,7 @@ CREATE_FINAL_CONSENSUS () {
     
     if [[ "$SELF" -eq "1" ]];
       then
-      python3 $CURR_PATH/weighted_generate_consensus.py -i $file -v $name_vir -k 1 2 4 15 30 100 200 1000
+      python3 $CURR_PATH/weighted_generate_consensus.py -i $file -v $name_vir -k 5 15 30 100 200 400 500
       python3 $CURR_PATH/generate_consensus.py -i new.fa -o cooppipe-$name_vir-consensus.fa
     fi
   done
@@ -1655,11 +1656,12 @@ CPU_perc	$total_cpu%" > v-pipe-time.txt
     cd $TOOL_PATH
   fi 
   cd $CURR_PATH
+  PERFORM_MULTIPLE_ALIGNMENT $OUTPUT/consensus
 fi
 #
 ################################################################################
 #
-PERFORM_MULTIPLE_ALIGNMENT $OUTPUT/consensus
+#PERFORM_MULTIPLE_ALIGNMENT $OUTPUT/consensus
 CREATE_FINAL_CONSENSUS $OUTPUT/consensus
 #
 #printf "Evaluating results based on the classification made of the input reads.\n\n"

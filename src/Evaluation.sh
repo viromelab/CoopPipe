@@ -5,11 +5,8 @@ D_PATH="out_analysis"
 REF_DIR=""
 CURR_PATH="$(pwd)"
 #
-declare -a ANALYSIS=("tracespipelite" "spades" "metaspades" "metaviralspades" "coronaspades" "ssake" "tracespipe" "lazypipe" "pehaplo" "haploflow");
-declare -a NO_ANALYSIS=("qvg" "qure" "vispa" "virgena" "v");
-#
-declare -a CLASSIFICATION=("tracespipelite" "tracespipe" "lazypipe");
-declare -a NO_CLASSIFICATION=("spades" "metaspades" "metaviralspades" "coronaspades" "ssake" "pehaplo" "qvg" "qure" "vispa" "virgena" "haploflow" "v");
+count=0;
+declare -a ORDER_TOOLS=("cooppipe" "coronaspades" "haploflow" "lazypipe" "metaspades" "metaviralspades" "pehaplo" "qure" "qvg" "spades" "ssake" "tracespipe" "tracespipelite" "virgena" "vispa" "v")
 #
 declare -a VIRUSES_AVAILABLE=("B19V" "BuV" "CuV" "HBoV" "AAV" "BKPyV" "JCPyV" "KIPyV"
                     "WUPyV" "MCPyV" "HPyV6" "HPyV7" "TSPyV" "HPyV9" "MWPyV"
@@ -112,9 +109,24 @@ if [[ -d "$REF_DIR" ]] && [[ -d "$D_PATH" ]];
   CONSENSUS="$(pwd)/$D_PATH/consensus"
 
   echo "File	Virus	Time(s)	SNPs	AvgIdentity	NCSD	NRC	Mem(GB)	%CPU	Nr contigs	Metagenomic_analysis	Metagenomic_classification	Name tool" > Results/total_stats.tsv
+  rm Results/total_stats.tex
+    echo "\begin{table*}[h!]
+\begin{center}
+\caption{Results obtained for $D_PATH using the benchmark and applying it to the different databases generated. The execution time was measured in seconds, the RAM usage was measured in GB and the average identity, accuracy and CPU usage are presented as a percentage. The executions were, when possible, capped at 6 threads and 48 GB of RAM.}
+\label{resultstable:$D_PATH}
+\scriptsize
+\begin{tabular}{| m{7.5em} | m{5em}| m{2.7em} | m{4em} | m{2.5em} | m{2.5em} | m{5em} | m{3em} | m{4em}  | m{6.5em} |}
+\hline
+\textbf{Name Tool} & \textbf{Virus} & \textbf{Execution time} & \textbf{SNPs} & \textbf{Avg Identity} & \textbf{NCSD} & \textbf{NRC} & \textbf{RAM usage} & \textbf{CPU usage} & \textbf{Number of contigs} \\\\\\hline 
+
+
+
+
+" >> Results/total_stats.tex
 #
   for REF_FILE in `ls $(pwd)/$REF_DIR/*.fa` #for each fasta file in curr dir
     do 
+    count=0
   
   for file in `ls $CONSENSUS/*-*-consensus.fa*` #for each fasta file in curr dir
   do 
@@ -259,7 +271,14 @@ if [[ -d "$REF_DIR" ]] && [[ -d "$D_PATH" ]];
       MEM=$(echo $MEM \/ 1048576 |bc -l | xargs printf %.3f)
       
     #file	exec_time	snps	avg_identity	NCSD	NRC	max_mem	cpu_avg	nr_contigs_reconstructed	metagenomic_analysis	metagenomic_classification	coverage	snp_dataset
+    CPU="$(cut -d'%' -f1 <<< "$CPU_P")"
     echo "$file	$name_vir_ref	$TIME	$SNPS	$IDEN	$NCSD	$NRC	$MEM	$CPU_P	$NR_SPECIES	$DOES_ANALYSIS	$DOES_CLASSIFICATION	$NAME_TOOL" >> Results/total_stats.tsv   
+    
+
+    
+    echo "$NAME_TOOL & $name_vir_ref & $TIME & $SNPS & $IDEN & $NCSD & $NRC & $MEM & $CPU & $NR_SPECIES \\\\\\hline" >> Results/total_stats.tex
+    count=$(($count + 1))
+    
     fi 
      
      
@@ -271,6 +290,17 @@ if [[ -d "$REF_DIR" ]] && [[ -d "$D_PATH" ]];
     
   done
   conda activate base
+  
+
+    
+      echo "
+\end{tabular}
+\end{center}
+\end{table*}
+
+
+" >> Results/total_stats.tex  
+  ./Evaluation_k.sh -r $REF_DIR -o $D_PATH
 else 
   printf "ERR \n\n"
 
