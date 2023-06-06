@@ -55,6 +55,7 @@ declare -a VIRUSES_AVAILABLE=("B19V" "BuV" "CuV" "HBoV" "AAV" "BKPyV" "JCPyV" "K
 declare -a VIRUSES;
 FORCE_REFERENCES="0";
 REFERENCES_DIR="";
+AWK="0";
 #
 ################################################################################
 #
@@ -113,6 +114,9 @@ SHOW_MENU () {
   echo "                                                                    ";
   echo " --consensus  <STR>            Consensus script to be used.         ";
   echo "                               Options: self, emboss                ";
+  echo "                                                                    ";
+  echo " --awk  <STR>                  Generate consensus.                  ";
+  echo "                                                                    ";
   echo "                                                                    ";
   echo " -o  <STR>, --output <STR>     Output folder name,                  ";
   echo "                                                                    ";
@@ -712,6 +716,11 @@ while [[ $# -gt 0 ]]
         EMBOSS="1"
         SELF="0"  
       fi     
+      shift 2;
+    ;;
+    -awk)
+      OUTPUT="$(pwd)/$2";
+      AWK="1"
       shift 2;
     ;;
     -o|--output)
@@ -1657,12 +1666,16 @@ CPU_perc	$total_cpu%" > v-pipe-time.txt
   fi 
   cd $CURR_PATH
   PERFORM_MULTIPLE_ALIGNMENT $OUTPUT/consensus
+  CREATE_FINAL_CONSENSUS $OUTPUT/consensus
 fi
 #
 ################################################################################
 #
 #PERFORM_MULTIPLE_ALIGNMENT $OUTPUT/consensus
-CREATE_FINAL_CONSENSUS $OUTPUT/consensus
+if [[ "$AWK" -eq "1" ]];
+  then
+  CREATE_FINAL_CONSENSUS $OUTPUT/consensus
+fi
 #
 #printf "Evaluating results based on the classification made of the input reads.\n\n"
 #cd references

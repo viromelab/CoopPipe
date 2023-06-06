@@ -182,3 +182,4 @@ if __name__ == '__main__':
     os.system("cat tmp-" + args.v + "-*.fa > new.fa")
     #os.system('rm tmp-*.fa')
 
+

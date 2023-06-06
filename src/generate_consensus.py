@@ -100,9 +100,12 @@ def generate_consensus (output):
 
     file = open(output, "w")
 
-    consensus[:len(dict_content.get(1))]
+    print ("cut_len", len(dict_content.get(1))-1)
+    sliced = consensus[: len(dict_content.get(1))-1]
+    
+    print (sliced, len(sliced))
 
-    file.write(">CoopPipe_consensus\n" + ''.join(consensus) + "\n" )
+    file.write(">CoopPipe_consensus\n" + ''.join(sliced) + "\n" )
 
 
 
@@ -133,3 +136,4 @@ if __name__ == '__main__':
         output = args.o
     read_file(filename)
     generate_consensus(output)
+
