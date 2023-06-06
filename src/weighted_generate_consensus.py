@@ -27,10 +27,7 @@ def read_file (path): #read file and add it to a dictionary
 
         if line[0] != ">":
             add_to_dict(count, line.strip("\n"), dict_content)
-        else:
-
-            if count > 0:
-                print("dict length - ", len(dict_content.get(count)))
+        else:            
             count += 1
 
 
@@ -154,7 +151,7 @@ def generate_consensus (output, k):
     file = open(output, "w")
 
     consensus[:len(dict_content.get(0))]
-    print("consensus length", len(consensus))
+    #print("consensus length", len(consensus))
     file.write(">CoopPipe_consensus\n" + ''.join(consensus)  + "\n")
 
     file.close()

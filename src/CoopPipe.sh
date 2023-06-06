@@ -509,20 +509,19 @@ PERFORM_MULTIPLE_ALIGNMENT () {
 CREATE_FINAL_CONSENSUS () {
   DIRECTORY=$1
   #
-  
-  eval "$(conda shell.bash hook)"
-  conda activate emboss
   cd $DIRECTORY
   for file in $(ls multifasta*.fa);
     do
+    eval "$(conda shell.bash hook)"
     tmp="$(cut -d'.' -f1 <<< $file)"
     name_vir="$(cut -d'-' -f2 <<< $tmp)"    
     #cons -sequence $file -outseq cooppipeemboss-$name_vir-consensus.fa
     #python3 $CURR_PATH/generate_consensus.py -i $file -o cooppipealt-$name_vir-consensus.fa
     if [[ "$EMBOSS" -eq "1" ]];
       then
+      
+      conda activate emboss
       cons -sequence $file -outseq cooppipe-$name_vir-consensus.fa
-    
     fi
     
     if [[ "$SELF" -eq "1" ]];
