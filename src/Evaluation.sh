@@ -7,6 +7,7 @@ CURR_PATH="$(pwd)"
 #
 count=0;
 declare -a ORDER_TOOLS=("cooppipe" "coronaspades" "haploflow" "lazypipe" "metaspades" "metaviralspades" "pehaplo" "qure" "qvg" "spades" "ssake" "tracespipe" "tracespipelite" "virgena" "vispa" "v")
+declare -a ORDER_TOOLS_CAP=("CoopPipe" "coronaSPAdes" "Haploflow" "LAZYPIPE" "metaSPAdes" "metaviralSPAdes" "PEHaplo" "QuRe" "QVG" "SPAdes" "SSAKE" "TRACESPipe" "TRACESPipeLite" "VirGenA" "ViSpA" "V-pipe")
 #
 declare -a VIRUSES_AVAILABLE=("B19V" "BuV" "CuV" "HBoV" "AAV" "BKPyV" "JCPyV" "KIPyV"
                     "WUPyV" "MCPyV" "HPyV6" "HPyV7" "TSPyV" "HPyV9" "MWPyV"
@@ -162,6 +163,9 @@ if [[ -d "$REF_DIR" ]] && [[ -d "$D_PATH" ]];
       gawk -i inplace '{ while(sub(/QuRe./,int(rand()*99999999999)+1)); print }' $file
       gawk -i inplace '{ while(sub(/results/,int(rand()*99999999999)+1)); print }' $file
 
+      cat $file | tr [:lower:] [:upper:] > tmp.txt
+      mv tmp.txt $file 
+      
       dnadiff $file $REF_FILE; #run dnadiff
       
       IDEN=`cat out.report | grep "AvgIdentity " | head -n 1 | awk '{ print $2;}'`;  #retrieve results
@@ -272,6 +276,21 @@ if [[ -d "$REF_DIR" ]] && [[ -d "$D_PATH" ]];
       
     #file	exec_time	snps	avg_identity	NCSD	NRC	max_mem	cpu_avg	nr_contigs_reconstructed	metagenomic_analysis	metagenomic_classification	coverage	snp_dataset
     CPU="$(cut -d'%' -f1 <<< "$CPU_P")"
+    
+    for tool in "${ORDER_TOOLS_CAP[@]}"
+      do
+      
+      tool_lower=$(echo "$tool" | tr '[:upper:]' '[:lower:]')
+      
+      if [ "$tool_lower" == "$NAME_TOOL" ] ; then
+      
+        NAME_TOOL=$tool
+      
+      fi
+      
+      
+    done
+    
     echo "$file	$name_vir_ref	$TIME	$SNPS	$IDEN	$NCSD	$NRC	$MEM	$CPU_P	$NR_SPECIES	$DOES_ANALYSIS	$DOES_CLASSIFICATION	$NAME_TOOL" >> Results/total_stats.tsv   
     
 

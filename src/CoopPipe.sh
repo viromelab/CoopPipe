@@ -115,7 +115,8 @@ SHOW_MENU () {
   echo " --consensus  <STR>            Consensus script to be used.         ";
   echo "                               Options: self, emboss                ";
   echo "                                                                    ";
-  echo " --awk  <STR>                  Generate consensus.                  ";
+  echo " --awk  <STR>                  Generate consensus with AWK.         ";
+  echo " --emboss  <STR>               Generate consensus with EMBOSS.      ";
   echo "                                                                    ";
   echo "                                                                    ";
   echo " -o  <STR>, --output <STR>     Output folder name,                  ";
@@ -522,6 +523,7 @@ CREATE_FINAL_CONSENSUS () {
       
       conda activate emboss
       cons -sequence $file -outseq cooppipe-$name_vir-consensus.fa
+      conda activate base
     fi
     
     if [[ "$SELF" -eq "1" ]];
@@ -536,7 +538,7 @@ CREATE_FINAL_CONSENSUS () {
   #mv multifasta-*.fa multifasta
 
   cd $CURR_PATH
-  conda activate base
+  
 }
 #
 ################################################################################
@@ -717,9 +719,15 @@ while [[ $# -gt 0 ]]
       fi     
       shift 2;
     ;;
-    -awk)
+    --awk)
       OUTPUT="$(pwd)/$2";
       AWK="1"
+      shift 2;
+    ;;
+    --emboss)
+      OUTPUT="$(pwd)/$2";
+      EMBOSS="1"
+      SELF="0"  
       shift 2;
     ;;
     -o|--output)
@@ -1653,6 +1661,10 @@ CPU_perc	$total_cpu%" > v-pipe-time.txt
     rm -rf v-pipe-*-time.txt
     cat *.fasta > v-pipe-reconstructed.fa
     rm -rf *.fasta
+    
+    cat v-pipe-reconstructed.fa | tr [:lower:] [:upper:] > tmp.txt
+    mv tmp.txt v-pipe-reconstructed.fa
+      
     mv v-pipe-reconstructed.fa $OUTPUT    
 
     cd ../
@@ -1672,6 +1684,11 @@ fi
 #
 #PERFORM_MULTIPLE_ALIGNMENT $OUTPUT/consensus
 if [[ "$AWK" -eq "1" ]];
+  then
+  CREATE_FINAL_CONSENSUS $OUTPUT/consensus
+fi
+#
+if [[ "$EMBOSS" -eq "1" ]];
   then
   CREATE_FINAL_CONSENSUS $OUTPUT/consensus
 fi

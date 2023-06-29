@@ -47,7 +47,7 @@ for virus in "${VIRUSES_AVAILABLE[@]}"
       set rmargin 5
       set key at screen 1, graph 1 
       
-      plot "$virus" u 3:5 with linespoints lc 0 notitle
+      plot "$virus" u 3:5 with linespoints lc 10 notitle
   
 EOF
     printf "2\n"
@@ -70,7 +70,7 @@ EOF
       set rmargin 5
       set key at screen 1, graph 1 
         
-      plot "$virus" u 3:6 with linespoints lc 0 notitle
+      plot "$virus" u 3:6 with linespoints lc 10 notitle
   
 EOF
     printf "3\n"
@@ -93,7 +93,7 @@ EOF
       set rmargin 5
       set key at screen 1, graph 1 
         
-      plot "$virus" u 3:7 with linespoints lc 0 notitle
+      plot "$virus" u 3:7 with linespoints lc 10 notitle
   
 EOF
   
