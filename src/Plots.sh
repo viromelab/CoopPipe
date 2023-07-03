@@ -30,7 +30,7 @@ for virus in "${VIRUSES_AVAILABLE[@]}"
  
   sort -k5 -r -g total_stats.tsv > tmp.tsv
   cooppipe=$(cat tmp.tsv | tr ',' '.' | grep -w "${virus}" | grep -w "cooppipe-$virus-consensus.fa" > "${virus}-cooppipe")
-  best_tool=$(cat tmp.tsv | tail -n +2 | tr ',' '.'  | grep -w "${virus}" | grep -w --invert-match "cooppipe-$virus-consensus.fa" | head -1 > "${virus}-not")
+  best_tool=$(cat tmp.tsv | tail -n +2 | tr ',' '.'  | grep -w "${virus}" | grep -w --invert-match "cooppipe-$virus-consensus.fa" | head -1 > "${virus}-a")
   
   if [ -s ${virus}-cooppipe ];
     then
@@ -45,7 +45,7 @@ for virus in "${VIRUSES_AVAILABLE[@]}"
  
   sort -t$'\t' -k6 -n total_stats.tsv > tmp.tsv
   cooppipe=$(cat tmp.tsv | tr ',' '.' | grep -w "${virus}" | grep -w "cooppipe-$virus-consensus.fa" > "${virus}-cooppipe")
-  best_tool=$(cat tmp.tsv | tail -n +2 | tr ',' '.'  | grep -w "${virus}" | grep -w --invert-match "cooppipe-$virus-consensus.fa" | head -1 > "${virus}-not")
+  best_tool=$(cat tmp.tsv | tail -n +2 | tr ',' '.'  | grep -w "${virus}" | grep -w --invert-match "cooppipe-$virus-consensus.fa" | head -1 > "${virus}-a")
   
   cd ..
   
@@ -54,7 +54,7 @@ for virus in "${VIRUSES_AVAILABLE[@]}"
  
     sort -t$'\t' -k7 -g total_stats.tsv > tmp.tsv
   cooppipe=$(cat tmp.tsv | tr ',' '.' | grep -w "${virus}" | grep -w "cooppipe-$virus-consensus.fa" > "${virus}-cooppipe")
-  best_tool=$(cat tmp.tsv | tail -n +2 | tr ',' '.'  | grep -w "${virus}" | grep -w --invert-match "cooppipe-$virus-consensus.fa" | head -1 > "${virus}-not")
+  best_tool=$(cat tmp.tsv | tail -n +2 | tr ',' '.'  | grep -w "${virus}" | grep -w --invert-match "cooppipe-$virus-consensus.fa" | head -1 > "${virus}-a")
  
   cd ..  
 done
@@ -76,7 +76,7 @@ cd ..
 #
 list_avg=($(ls avg_identity))  
 list_ncsd=($(ls NCSD))
-list_nrc=($(ls NRC))
+list_nrc=($(ls  NRC))
 #
 #  
 #printf "${list[*]} \n\n"
@@ -106,6 +106,7 @@ gnuplot << EOF
     count = 10
     aux = 0
     do for [ file in "${list_avg[@]}"]{  
+      print file
     
       pos = strstrt(file,"-")
       virus = file[0:pos-1]
@@ -116,10 +117,10 @@ gnuplot << EOF
       
       if(aux == 0){
         aux = aux + 1;
-        plot file using (count):5:13 with labels point pt 7 lc rgb "#009e73" offset char 6,-0.1 notitle
-      } else {
-  
         plot file using (count):5:13 with labels point pt 7 lc "black" offset char 6,-0.1 notitle
+       
+      } else {
+        plot file using (count):5:13 with labels point pt 3 lc rgb "#009e73" offset char 6,-0.1 notitle
         count = count + spacing_x
         aux = 0
       }
@@ -162,10 +163,12 @@ gnuplot << EOF
       
       if(aux == 0){
         aux = aux + 1;
-        plot file using (count):6:13 with labels point pt 7 lc rgb "#009e73" offset char 6,-0.1 notitle
+        plot file using (count):6:13 with labels point pt 7 lc "black" offset char 6,-0.1 notitle
+        
+       
       } else {
   
-        plot file using (count):6:13 with labels point pt 7 lc "black" offset char 6,-0.1 notitle
+        plot file using (count):6:13 with labels point pt 3 lc rgb "#009e73" offset char 6,-0.1 notitle
         count = count + spacing_x
         aux = 0
       }
@@ -208,10 +211,10 @@ gnuplot << EOF
       
       if(aux == 0){
         aux = aux + 1;
-        plot file using (count):7:13 with labels point pt 7 lc rgb "#009e73" offset char 6,-0.1 notitle
-      } else {
-  
         plot file using (count):7:13 with labels point pt 7 lc "black" offset char 6,-0.1 notitle
+        
+      } else {
+        plot file using (count):7:13 with labels point pt 3 lc rgb "#009e73" offset char 6,-0.1 notitle
         count = count + spacing_x
         aux = 0
       }
