@@ -116,7 +116,7 @@ gnuplot << EOF
       
       if(aux == 0){
         aux = aux + 1;
-        plot file using (count):5:13 with labels point pt 7 lc "green" offset char 6,-0.1 notitle
+        plot file using (count):5:13 with labels point pt 7 lc rgb "#009e73" offset char 6,-0.1 notitle
       } else {
   
         plot file using (count):5:13 with labels point pt 7 lc "black" offset char 6,-0.1 notitle
@@ -162,7 +162,7 @@ gnuplot << EOF
       
       if(aux == 0){
         aux = aux + 1;
-        plot file using (count):6:13 with labels point pt 7 lc "green" offset char 6,-0.1 notitle
+        plot file using (count):6:13 with labels point pt 7 lc rgb "#009e73" offset char 6,-0.1 notitle
       } else {
   
         plot file using (count):6:13 with labels point pt 7 lc "black" offset char 6,-0.1 notitle
@@ -208,7 +208,7 @@ gnuplot << EOF
       
       if(aux == 0){
         aux = aux + 1;
-        plot file using (count):7:13 with labels point pt 7 lc "green" offset char 6,-0.1 notitle
+        plot file using (count):7:13 with labels point pt 7 lc rgb "#009e73" offset char 6,-0.1 notitle
       } else {
   
         plot file using (count):7:13 with labels point pt 7 lc "black" offset char 6,-0.1 notitle
