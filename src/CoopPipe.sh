@@ -1287,7 +1287,7 @@ CPU_perc	$total_cpu%" > qvg-time.txt
     rm -rf *.fq.gz
     gzip $aux_READS1
     gzip $aux_READS2
-    /bin/time -f "TIME\t%e\nMEM\t%M\nCPU_perc\t%P" -o tracespipelite-time.txt ./TRACESPipeLite.sh --similarity 50 --threads $THREADS --reads1 $aux_READS1.gz --reads2 $aux_READS2.gz --database VDB.mfa --output test_viral_analysis --no-plots
+    /bin/time -f "TIME\t%e\nMEM\t%M\nCPU_perc\t%P" -o tracespipelite-time.txt ./TRACESPipeLite.sh --similarity 5 --threads $THREADS --reads1 $aux_READS1.gz --reads2 $aux_READS2.gz --database VDB.mfa --output test_viral_analysis --no-plots
     cd test_viral_analysis
     for virus in $(ls)
     do
@@ -1373,7 +1373,7 @@ CPU_perc	$total_cpu%" > qvg-time.txt
         <Graph>
             <MinReadNumber>5</MinReadNumber>
             <VertexWeight>10</VertexWeight>
-			<SimilarityThreshold>0.5</SimilarityThreshold>
+			<SimilarityThreshold>0.05</SimilarityThreshold>
 			<Debug>false</Debug>
         </Graph>
         <Debug>false</Debug>
