@@ -57,6 +57,8 @@ FORCE_REFERENCES="0";
 REFERENCES_DIR="";
 AWK="0";
 #
+RESULT="0";
+#
 ################################################################################
 #
 SHOW_MENU () {
@@ -541,6 +543,19 @@ CREATE_FINAL_CONSENSUS () {
   
 }
 #
+check_installation () { 
+  NAME_TOOL=$1
+  RESULT=0
+  $TOOL_PATH/Verification.sh --$NAME_TOOL > verif.txt
+  if [[ $(wc -l < verif.txt ) -eq "1" ]] 
+    then
+    RESULT=1
+  else
+    RESULT=0
+  fi
+  #printf "$NAME_TOOL      $RESULT\n"
+}
+#
 ################################################################################
 #
 if [[ "$#" -lt 1 ]];
@@ -571,82 +586,112 @@ while [[ $# -gt 0 ]]
       INSTALL_SPECIFIC=1;
       shift
     ;;
-    --coronaspades)
-      CORONASPADES=1;
+        --coronaspades)
+      check_installation coronaspades;
+      RUN_CORONASPADES=$RESULT;
       shift
     ;;
     --haploflow)
-      HAPLOFLOW=1;
+      check_installation haploflow;
+      RUN_HAPLOFLOW=$RESULT;
       shift
     ;;
     --lazypipe)
-      LAZYPIPE=1;
+      check_installation lazypipe;
+      RUN_LAZYPIPE=$RESULT;
       shift
     ;;
     --metaspades)
-      METASPADES=1;
+      check_installation metaspades;
+      RUN_METASPADES=$RESULT;
       shift
     ;;
     --metaviralspades)
-      METAVIRALSPADES=1;
+      check_installation metaviralspades;
+      RUN_METAVIRALSPADES=$RESULT;
       shift
     ;;
     --pehaplo)
-      PEHAPLO=1;
+      check_installation pehaplo;
+      RUN_PEHAPLO=$RESULT;
       shift
     ;;
     --qure)
-      QURE=1;
+      check_installation qure;
+      RUN_QURE=$RESULT;
       shift
     ;;
     --qvg)
-      QVG=1;
+      check_installation qvg;
+      RUN_QVG=$RESULT;
       shift
     ;;
-    --spades)
-      SPADES=1;
+    --spades)      
+      check_installation spades;
+      RUN_SPADES=$RESULT;
       shift
     ;;
     --ssake)
-      SSAKE=1;
+      check_installation ssake;
+      RUN_SSAKE=$RESULT;
       shift
     ;;
     --tracespipe)
-      TRACESPIPE=1;
+      check_installation tracespipe;
+      RUN_TRACESPIPE=$RESULT;
       shift
     ;;
     --tracespipelite)
-      TRACESPIPELITE=1;
+      check_installation tracespipelite;
+      RUN_TRACESPIPELITE=$RESULT;
       shift
     ;;
     --virgena)
-      VIRGENA=1;
+      check_installation virgena;
+      RUN_VIRGENA=$RESULT;
       shift
     ;;
     --vispa)
-      VISPA=1;
+      check_installation vispa;
+      RUN_VISPA=$RESULT;
       shift
     ;;
     --vpipe)
-      VPIPE=1;
+      check_installation vpipe;
+      RUN_VPIPE=$RESULT;
       shift
     ;;
     --all)
-      CORONASPADES=1;
-      HAPLOFLOW=1;
-      LAZYPIPE=1;
-      METASPADES=1;
-      METAVIRALSPADES=1;
-      PEHAPLO=1;
-      QURE=1;
-      QVG=1;
-      SPADES=1;
-      SSAKE=1;
-      TRACESPIPE=1;
-      TRACESPIPELITE=1;
-      VIRGENA=1;
-      VISPA=1;
-      VPIPE=1;
+      check_installation coronaspades;
+      RUN_CORONASPADES=$RESULT;
+      check_installation haploflow;
+      RUN_HAPLOFLOW=$RESULT;
+      check_installation lazypipe;
+      RUN_LAZYPIPE=$RESULT;
+      check_installation metaspades;
+      RUN_METASPADES=$RESULT;
+      check_installation metaviralspades;
+      RUN_METAVIRALSPADES=$RESULT;
+      check_installation pehaplo;
+      RUN_PEHAPLO=$RESULT;
+      check_installation qure;
+      RUN_QURE=$RESULT;
+      check_installation qvg;
+      RUN_QVG=$RESULT;
+      check_installation spades;
+      RUN_SPADES=$RESULT;
+      check_installation ssake;
+      RUN_SSAKE=$RESULT;
+      check_installation tracespipe;
+      RUN_TRACESPIPE=$RESULT;
+      check_installation tracespipelite;
+      RUN_TRACESPIPELITE=$RESULT;
+      check_installation virgena;
+      RUN_VIRGENA=$RESULT;
+      check_installation vispa;
+      RUN_VISPA=$RESULT;
+      check_installation vpipe;
+      RUN_VPIPE=$RESULT;
       shift
     ;;
     --virgena-timeout)
