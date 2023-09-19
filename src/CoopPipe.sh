@@ -59,6 +59,7 @@ AWK="0";
 #
 RESULT="0";
 #
+TOP="150";
 ################################################################################
 #
 SHOW_MENU () {
@@ -100,6 +101,9 @@ SHOW_MENU () {
   echo "                                                                    ";
   echo " --virgena-timeout             Maximum time used by VirGenA         "; 
   echo "                               to reconstruct with each reference,  ";
+  echo "                                                                    ";
+  echo " --top_falcon  <INT>           Maximum number of references retrived";
+  echo "                               by FALCON-meta,                      ";
   echo "                                                                    ";
   echo " -t  <INT>, --threads <INT>    Number of threads,                   ";
   echo " -m  <INT>, --memory <INT>     Maximum of RAM available,            ";
@@ -217,7 +221,7 @@ CLASSIFY_INPUT () {
     #lzma -d $DATABASE.lzma
     lzma -d VDB.fa.lzma
   
-    FALCON -v -n $THREADS -t 8000 -F -m 6:1:1:0/0 -m 13:50:1:0/0 -m 19:500:1:5/10 -g 0.85 -c 10 -x top-metagenomics.csv $INPUT_FILE $DATABASE
+    FALCON -v -n $THREADS -t $TOP -F -m 6:1:1:0/0 -m 13:50:1:0/0 -m 19:500:1:5/10 -g 0.85 -c 10 -x top-metagenomics.csv $INPUT_FILE $DATABASE
     #
     ## GET HIGHEST SIMILAR REFERENCE =============================================
     #
@@ -586,112 +590,113 @@ while [[ $# -gt 0 ]]
       INSTALL_SPECIFIC=1;
       shift
     ;;
-        --coronaspades)
+      --coronaspades)
       check_installation coronaspades;
-      RUN_CORONASPADES=$RESULT;
+      CORONASPADES=$RESULT;
       shift
     ;;
     --haploflow)
       check_installation haploflow;
-      RUN_HAPLOFLOW=$RESULT;
+      HAPLOFLOW=$RESULT;
       shift
     ;;
     --lazypipe)
       check_installation lazypipe;
-      RUN_LAZYPIPE=$RESULT;
+      LAZYPIPE=$RESULT;
       shift
     ;;
     --metaspades)
       check_installation metaspades;
-      RUN_METASPADES=$RESULT;
+      METASPADES=$RESULT;
       shift
     ;;
     --metaviralspades)
       check_installation metaviralspades;
-      RUN_METAVIRALSPADES=$RESULT;
+      METAVIRALSPADES=$RESULT;
       shift
     ;;
     --pehaplo)
       check_installation pehaplo;
-      RUN_PEHAPLO=$RESULT;
+      PEHAPLO=$RESULT;
       shift
     ;;
     --qure)
       check_installation qure;
-      RUN_QURE=$RESULT;
+      QURE=$RESULT;
       shift
     ;;
     --qvg)
       check_installation qvg;
-      RUN_QVG=$RESULT;
+      QVG=$RESULT;
       shift
     ;;
     --spades)      
       check_installation spades;
-      RUN_SPADES=$RESULT;
+      SPADES=$RESULT;
+      printf "SPADES -> $RUN_SPADES\n\n"
       shift
     ;;
     --ssake)
       check_installation ssake;
-      RUN_SSAKE=$RESULT;
+      SSAKE=$RESULT;
       shift
     ;;
     --tracespipe)
       check_installation tracespipe;
-      RUN_TRACESPIPE=$RESULT;
+      TRACESPIPE=$RESULT;
       shift
     ;;
     --tracespipelite)
       check_installation tracespipelite;
-      RUN_TRACESPIPELITE=$RESULT;
+      TRACESPIPELITE=$RESULT;
       shift
     ;;
     --virgena)
       check_installation virgena;
-      RUN_VIRGENA=$RESULT;
+      VIRGENA=$RESULT;
       shift
     ;;
     --vispa)
       check_installation vispa;
-      RUN_VISPA=$RESULT;
+      VISPA=$RESULT;
       shift
     ;;
     --vpipe)
       check_installation vpipe;
-      RUN_VPIPE=$RESULT;
+      VPIPE=$RESULT;
       shift
     ;;
     --all)
       check_installation coronaspades;
-      RUN_CORONASPADES=$RESULT;
+      CORONASPADES=$RESULT;
       check_installation haploflow;
-      RUN_HAPLOFLOW=$RESULT;
+      HAPLOFLOW=$RESULT;
       check_installation lazypipe;
-      RUN_LAZYPIPE=$RESULT;
+      LAZYPIPE=$RESULT;
       check_installation metaspades;
-      RUN_METASPADES=$RESULT;
+      METASPADES=$RESULT;
       check_installation metaviralspades;
-      RUN_METAVIRALSPADES=$RESULT;
+      METAVIRALSPADES=$RESULT;
       check_installation pehaplo;
-      RUN_PEHAPLO=$RESULT;
+      PEHAPLO=$RESULT;
       check_installation qure;
-      RUN_QURE=$RESULT;
+      QURE=$RESULT;
       check_installation qvg;
-      RUN_QVG=$RESULT;
+      QVG=$RESULT;
       check_installation spades;
-      RUN_SPADES=$RESULT;
+      SPADES=$RESULT;
       check_installation ssake;
-      RUN_SSAKE=$RESULT;
+      SSAKE=$RESULT;
       check_installation tracespipe;
-      RUN_TRACESPIPE=$RESULT;
+      TRACESPIPE=$RESULT;
       check_installation tracespipelite;
-      RUN_TRACESPIPELITE=$RESULT;
+      TRACESPIPELITE=$RESULT;
       check_installation virgena;
-      RUN_VIRGENA=$RESULT;
+      VIRGENA=$RESULT;
       check_installation vispa;
-      RUN_VISPA=$RESULT;
+      VISPA=$RESULT;
       check_installation vpipe;
-      RUN_VPIPE=$RESULT;
+      VPIPE=$RESULT;
       shift
     ;;
     --virgena-timeout)
@@ -729,6 +734,10 @@ while [[ $# -gt 0 ]]
         FORCE_REFERENCES="1";
         REFERENCES_DIR="$2";
       fi     
+      shift 2;
+    ;;
+    --top_falcon)
+      TOP="$2";
       shift 2;
     ;;
     --align)
