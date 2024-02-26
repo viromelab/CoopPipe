@@ -59,7 +59,7 @@ SHOW_MENU () {
 if [[ "$#" -lt 1 ]];
   then
   HELP=1;
-  fi
+fi
 #
 POSITIONAL=();
 #
@@ -85,7 +85,7 @@ while [[ $# -gt 0 ]]
     exit 1;
     ;;
   esac
-  done
+done
 #
 set -- "${POSITIONAL[@]}" # restore positional parameters
 #
@@ -95,233 +95,277 @@ if [[ "$HELP" -eq "1" ]];
   then
   SHOW_MENU;
   exit;
-  fi
+fi
 #
 ################################################################################
 #
 if [[ -d "$REF_DIR" ]] && [[ -d "$D_PATH" ]];
   then
+  
+  printf "Ref. directory - $REF_DIR\nDirectory with reconstructed files - $D_PATH\n\n"
+  
   eval "$(conda shell.bash hook)"
   conda activate evaluation
   rm -rf Results
   mkdir Results
-  #cd Results
-  
+  #
   CONSENSUS="$(pwd)/$D_PATH/consensus"
 
-  echo "File	Virus	Time(s)	SNPs	AvgIdentity	NCSD	NRC	Mem(GB)	%CPU	Nr contigs	Metagenomic_analysis	Metagenomic_classification	Name tool" > Results/total_stats.tsv
-  rm Results/total_stats.tex
-    echo "\begin{table*}[h!]
+  #Create the .tsv file
+  echo "File	Virus	Time(s)	SNPs	AvgIdentity	NCSD	NRC	Mem(GB)	%CPU	Nr contigs	Metagenomic_analysis	Metagenomic_classification	Name tool	Reconstructed bases	Minimum contig length	Maximum contig length	Average contig length	Reconstructed bases without N	Minimum contig length without N	Maximum contig length without N	Average contig length without N" > Results/total_stats.tsv
+
+  
+  #Create the .tex file
+  echo "\begin{table*}[h!]
 \begin{center}
-\caption{Results obtained for $D_PATH using the benchmark and applying it to the different databases generated. The execution time was measured in seconds, the RAM usage was measured in GB and the average identity, accuracy and CPU usage are presented as a percentage. The executions were, when possible, capped at 6 threads and 48 GB of RAM.}
-\label{resultstable:$D_PATH}
+\caption{Results obtained for $dataset using the benchmark and applying it to the different databases generated. The execution time was measured in seconds, the RAM usage was measured in GB and the average identity, accuracy and CPU usage are presented as a percentage. The executions were, when possible, capped at 6 threads and 48 GB of RAM.}
+\label{resultstable:$dataset}
 \scriptsize
-\begin{tabular}{| m{7.5em} | m{5em}| m{2.7em} | m{4em} | m{2.5em} | m{2.5em} | m{5em} | m{3em} | m{4em}  | m{6.5em} |}
+\begin{tabular}{| m{7em} | m{4em}| m{2.5em} | m{4em} | m{2.5em} | m{2.5em} | m{3em} | m{3em} | m{4.5em} | m{5.5em} | m{3.8em}  | m{3.8em} | m{3.8em} |}
 \hline
-\textbf{Name Tool} & \textbf{Virus} & \textbf{Execution time} & \textbf{SNPs} & \textbf{Avg Identity} & \textbf{NCSD} & \textbf{NRC} & \textbf{RAM usage} & \textbf{CPU usage} & \textbf{Number of contigs} \\\\\\hline 
-
-
-
+%\textbf{Reconstruction tool} & \textbf{Execution time} & \textbf{SNPs} & \textbf{Avg Identity} & \textbf{NCSD} & \textbf{NRC} & \textbf{RAM usage} & \textbf{CPU usage} & \textbf{Number of contigs} & \textbf{Metagenomic analysis} & \textbf{Metagenomic classification} & \textbf{Reconstructed bases} & \textbf{Minimum contig length} & \textbf{Maximum contig length} & \textbf{Average contig length} \\\\\\hline 
+\textbf{Reconstruction tool} & \textbf{Execution time} & \textbf{SNPs} & \textbf{Avg Identity} & \textbf{NCSD} & \textbf{NRC} & \textbf{RAM usage} & \textbf{CPU usage} & \textbf{Number of contigs} & \textbf{Reconstructed bases} & \textbf{Minimum contig length} & \textbf{Maximum contig length} & \textbf{Average contig length} \\\\\\hline 
 
 " >> Results/total_stats.tex
-#
-  for REF_FILE in `ls $(pwd)/$REF_DIR/*.fa` #for each fasta file in curr dir
+
+  #Create the dnadiff stats file (.tsv & tex)
+  echo "\begin{table*}[h!]
+\begin{center}
+\caption{Results obtained by dnadiff \cite{kurtz2004versatile} when analysing the reconstruction of $dataset.  Only one excution of HVRS is represented.}
+\label{dnadiff_table:$dataset}
+\scriptsize
+\begin{tabular}{| m{7em} | m{3em}| m{3em} | m{3em} | m{3em} | m{4em} | m{4em} | m{3.5em} | m{3em} | m{4em} | } 
+\textbf{Reconstruction tool} & \textbf{Total seqs} & \textbf{Aligned seqs} & \textbf{Aligned bases} & \textbf{Aligned bases (\%)} & \textbf{Unaligned bases} & \textbf{Unaligned bases (\%)} & \textbf{Avg length} & \textbf{SNPs} & \textbf{Average identity} \\\\\\hline 
+
+" >> Results/dnadiff_stats.tex
+
+  #Create the dnadiff stats file (.tsv)
+  #echo "$name_vir_ref	$file	$TOTAL_SEQS	$ALIGNED_SEQS_NR	$ALIGNED_SEQS_PERC	$ALIGNED_BASES_NR	$ALIGNED_BASES_PERC	$UNALIGNED_BASES_NR	$UNALIGNED_BASES_PERC	$AVG_LEN	$IDEN	$SNPS" >> Results/dnadiff_stats.tsv 
+  echo "Virus	File	Total_seqs	Nr seqs aligned	Perc. aligned seqs	Number aligned bases	Perc. aligned bases	Nr unaligned bases	Perc. unaligned bases	Average length	Avg Identity	SNPs" > Results/dnadiff_stats.tsv 
+
+  for REF_FILE in `ls $(pwd)/$REF_DIR/*.fa` #for each reference in the references directory
     do 
-    count=0
-  
-  for file in `ls $CONSENSUS/*-*-consensus.fa*` #for each fasta file in curr dir
-  do 
-    tmp_nvr="$(echo $REF_FILE | awk -F/ '{print $NF}')"
-    name_vir_ref="$(cut -d'.' -f1 <<< $tmp_nvr)"
-    
-    tmp_nvrecon="$(echo $file | awk -F/ '{print $NF}')"
-    name_vir_recon="$(cut -d'-' -f 2 <<< $tmp_nvrecon)" #this won't work for v-pipe
-    
-    
-    #printf " REF --> $name_vir_ref      FILE --> $name_vir_recon \n\n" 
-    if [[ "$name_vir_ref" == "$name_vir_recon" ]];
-      then
-      printf " REF --> $REF_FILE      FILE --> $file \n\n" 
-     
-      rm -rf out.report	 
-      TIME=-1
-      SNPS=-1
-      IDEN=1
-    NCSD=1
-    NRC=1
-    MEM=-1
-    CPU_P=-1
-    NR_SPECIES=-1
-    DOES_ANALYSIS=-1
-    DOES_CLASSIFICATION=-1
-  
-    fst_char=$(cat $file | head -c 1)
-    if [[ -z "$fst_char" ]]; then
-      printf "The result file is empty."    
-    else
-      dos2unix $file  
-      gawk -i inplace '{ while(sub(/QuRe./,int(rand()*99999999999)+1)); print }' $file
-      gawk -i inplace '{ while(sub(/results/,int(rand()*99999999999)+1)); print }' $file
 
-      cat $file | tr [:lower:] [:upper:] > tmp.txt
-      mv tmp.txt $file 
+    for file in `ls $CONSENSUS/*-*-consensus.fa*` #for each reconstructed file in the reconstructed directory
+      do 
       
-      dnadiff $file $REF_FILE; #run dnadiff
+      tmp_nvr="$(echo $REF_FILE | awk -F/ '{print $NF}')"
+      name_vir_ref="$(cut -d'.' -f1 <<< $tmp_nvr)"
+    
+      tmp_nvrecon="$(echo $file | awk -F/ '{print $NF}')"
+      name_vir_recon="$(cut -d'-' -f 2 <<< $tmp_nvrecon)" #this won't work for v-pipe
       
-      IDEN=`cat out.report | grep "AvgIdentity " | head -n 1 | awk '{ print $2;}'`;  #retrieve results
-      ALBA=`cat out.report | grep "AlignedBases " | head -n 1 | awk '{ print $2;}'`;
-      SNPS=`cat out.report | grep TotalSNPs | awk '{ print $2;}'`;
-      TBASES=`cat out.report | grep "TotalBases" | awk '{ print $2;}'`;
-      AUX="$(cut -d')' -f1 <<< "$ALBA")"
-      PERALBA="$(cut -d'(' -f2 <<< "$AUX")"
-      TALBA="$(cut -d'(' -f1 <<< "$ALBA")" 
-         
-      NRBASES=`cat out.report | grep "TotalBases" | awk '{ print $2;}'`;  
-          
-      tmp_f="$(echo $file | awk -F/ '{print $NF}')"
-    file_wout_extension="$(cut -d'-' -f 1 <<< $tmp_f)"
-    #file_wout_extension="$(cut -d'-' -f -1 <<< $file_wout_extension)" #check if this work with v-pipe
-
-      printf "file wout -> $file_wout_extension\n\n"
-      
-      if [ "$file_wout_extension" == "v" ];
+      if [[ "$name_vir_ref" == "$name_vir_recon" ]]; #The viruses match, else skip
         then
-        file_wout_extension="v-pipe"
-      fi
       
-      printf "TIME -> $D_PATH/$file_wout_extension-time.txt \n\n"
-      
-      TIME=`cat $D_PATH/$file_wout_extension-time.txt | grep "TIME" | awk '{ print $2;}'`;
-      MEM=`cat $D_PATH/$file_wout_extension-time.txt | grep "MEM" | awk '{ print $2;}'`;
-      CPU_P=`cat $D_PATH/$file_wout_extension-time.txt | grep "CPU_perc" | awk '{ print $2;}'`;
-      #TMP=$(($TALBA * 100))
-      #ACCURACY=$(echo $TMP \/ $TBASES |bc -l | xargs printf %.3f)
-      
-      NAME_TOOL="$(cut -d'-' -f1 <<< $D_PATH/$file_wout_extension)"
-      NAME_TOOL="$(cut -d'/' -f2 <<< $NAME_TOOL)"
-      
-      DOES_ANALYSIS="?"
-      DOES_CLASSIFICATION="?"      
+        printf " REF --> $REF_FILE      FILE --> $file \n\n" 
+  
+        rm -rf out.report	 
+        TIME=-1
+        SNPS=-1
+        IDEN=1
+        NCSD=1
+        NRC=1
+        MEM=-1
+        CPU_P=-1
+        NR_SPECIES=-1
+        DOES_ANALYSIS=-1
+        DOES_CLASSIFICATION=-1
 
-      for i in "${ANALYSIS[@]}" #check if the tool does metagenomic analysis
-      do
-        if [ "$i" == "$NAME_TOOL" ] ; then
-          DOES_ANALYSIS="Yes"
-          break
-        fi 
-      done
       
-      if [ "$DOES_ANALYSIS" == "?" ] ; then
-        for i in "${NO_ANALYSIS[@]}"
-        do
-          if [ "$i" == "$NAME_TOOL" ] ; then
-            DOES_ANALYSIS="No"
-            break
-          fi 
-        done
-      fi
-      
-      for i in "${CLASSIFICATION[@]}" #check if the tool does metagenomic classification
-      do
-        if [ "$i" == "$NAME_TOOL" ] ; then
-          DOES_CLASSIFICATION="Yes"
-          break
+        fst_char=$(cat $file | head -c 1)
+        if [[ -z "$fst_char" ]]; then
+          printf "The result file is empty."    
+        else
+        #Convert it to unix, just in case
+        dos2unix $file  
+        
+        # These may not be needed, but keeping as a percaution
+        gawk -i inplace '{ while(sub(/QuRe./,int(rand()*99999999999)+1)); print }' $file
+        gawk -i inplace '{ while(sub(/results/,int(rand()*99999999999)+1)); print }' $file
+        #Upper case all characters
+        cat $file | tr [:lower:] [:upper:] > tmp.txt
+        mv tmp.txt $file
+
+        #Run dnadiff and get results
+        dnadiff $file $REF_FILE; #run dnadiff
+        IDEN=`cat out.report | grep "AvgIdentity " | head -n 1 | awk '{ print $2;}'`;  #retrieve results
+        ALBA=`cat out.report | grep "AlignedBases " | head -n 1 | awk '{ print $2;}'`;
+        SNPS=`cat out.report | grep TotalSNPs | awk '{ print $2;}'`;
+        TBASES=`cat out.report | grep "TotalBases" | awk '{ print $2;}'`;
+        AUX="$(cut -d')' -f1 <<< "$ALBA")"
+        PERALBA="$(cut -d'(' -f2 <<< "$AUX")"
+        TALBA="$(cut -d'(' -f1 <<< "$ALBA")"    
+        NRBASES=`cat out.report | grep "TotalBases" | awk '{ print $2;}'`;  
+    
+    
+        tmp_f="$(echo $file | awk -F/ '{print $NF}')"
+        file_wout_extension="$(cut -d'-' -f 1 <<< $tmp_f)"
+        
+        if [ "$file_wout_extension" == "v" ]; #dealing with V-pipe
+          then
+          file_wout_extension="v-pipe"
         fi
-      done
       
-      if [ "$DOES_CLASSIFICATION" == "?" ] ; then
-        for i in "${NO_CLASSIFICATION[@]}"
-        do
+        TIME=`cat $D_PATH/$file_wout_extension-time.txt | grep "TIME" | awk '{ print $2;}'`;
+        MEM=`cat $D_PATH/$file_wout_extension-time.txt | grep "MEM" | awk '{ print $2;}'`;
+        CPU_P=`cat $D_PATH/$file_wout_extension-time.txt | grep "CPU_perc" | awk '{ print $2;}'`;
+
+
+
+        NAME_TOOL="$(cut -d'-' -f1 <<< $D_PATH/$file_wout_extension)"
+        NAME_TOOL="$(cut -d'/' -f2 <<< $NAME_TOOL)"
+      
+        DOES_ANALYSIS="?"
+        DOES_CLASSIFICATION="?"      
+
+        for i in "${ANALYSIS[@]}" #check if the tool does metagenomic analysis
+          do
           if [ "$i" == "$NAME_TOOL" ] ; then
-            DOES_CLASSIFICATION="No"
+            DOES_ANALYSIS="Yes"
             break
           fi 
         done
-      fi
+      
+        if [ "$DOES_ANALYSIS" == "?" ] ; then
+          for i in "${NO_ANALYSIS[@]}"
+            do
+            if [ "$i" == "$NAME_TOOL" ] ; then
+              DOES_ANALYSIS="No"
+              break
+            fi 
+          done
+        fi
+      
+        for i in "${CLASSIFICATION[@]}" #check if the tool does metagenomic classification
+          do
+          if [ "$i" == "$NAME_TOOL" ] ; then
+            DOES_CLASSIFICATION="Yes"
+            break
+          fi
+        done
+      
+        if [ "$DOES_CLASSIFICATION" == "?" ] ; then
+          for i in "${NO_CLASSIFICATION[@]}"
+            do
+            if [ "$i" == "$NAME_TOOL" ] ; then
+              DOES_CLASSIFICATION="No"
+              break
+            fi 
+          done
+        fi
+        
+       # Get SeqKit statistics
+      printf "$(seqkit stats $file | tail -1)"
+      NR_SPECIES=$(seqkit stats $file  | tail -1 | sed 's/ \+ /\t/g' | sed 's/,//g' | cut -d'	' -f4)
+      SUM_LEN=$(seqkit stats $file  | tail -1 | sed 's/ \+ /\t/g' | sed 's/,//g' | cut -d'	' -f5)
+      MIN_LEN=$(seqkit stats $file  | tail -1 | sed 's/ \+ /\t/g' | sed 's/,//g' | cut -d'	' -f6)
+      MAX_LEN=$(seqkit stats $file  | tail -1 | sed 's/ \+ /\t/g' | sed 's/,//g' | cut -d'	' -f8)
+      AVG_LEN=$(seqkit stats $file  | tail -1 | sed 's/ \+ /\t/g' | sed 's/,//g' | cut -d'	' -f7)
       
       
       
-      NR_SPECIES=$(grep '>' $file -c)
+      cat $file | tr -d 'N' | sed '/^$/d' > seqfile
+      SUM_LEN_WOUT_N=$(seqkit stats seqfile | tail -1 | sed 's/ \+ /\t/g' | sed 's/,//g' | cut -d'	' -f5)
+      MIN_LEN_WOUT_N=$(seqkit stats seqfile | tail -1 | sed 's/ \+ /\t/g' | sed 's/,//g' | cut -d'	' -f6)
+      MAX_LEN_WOUT_N=$(seqkit stats seqfile | tail -1 | sed 's/ \+ /\t/g' | sed 's/,//g' | cut -d'	' -f8)
+      AVG_LEN_WOUT_N=$(seqkit stats seqfile | tail -1 | sed 's/ \+ /\t/g' | sed 's/,//g' | cut -d'	' -f7)
+      
+      rm seqfile
+     
+      
+      #printf "$NR_SPECIES $SUM_LEN  $MIN_LEN  $AVG_LEN  $MAX_LEN  \n\n"
+   
       gto_fasta_rand_extra_chars < $file > tmp.fa
-      gto_fasta_to_seq < tmp.fa > $file.seq
+      gto_fasta_to_seq < tmp.fa > $file_wout_extension.seq
       gto_fasta_to_seq < $REF_FILE > $REF_FILE.seq
       
-      #Compressing sequences C(X) or C(X,Y)
-      GeCo3 -tm 1:1:0:1:0.9/0:0:0 -tm 7:10:0:1:0/0:0:0 -tm 16:100:1:10:0/3:10:0.9 -lr 0.03 -hs 64 $file.seq 
-      COMPRESSED_SIZE_WOUT_REF=$(ls -l $file.seq.co | cut -d' ' -f5)
-      rm $file.seq.co
       
+      #Compressing sequences C(X) or C(X,Y)
+      GeCo3 -tm 1:1:0:1:0.9/0:0:0 -tm 7:10:0:1:0/0:0:0 -tm 16:100:1:10:0/3:10:0.9 -lr 0.03 -hs 64 $REF_FILE.seq 
+      COMPRESSED_SIZE_WOUT_REF=$(ls -l $REF_FILE.seq.co | cut -d' ' -f5)
+      rm $REF_FILE.seq.*
       #Conditional compression C(X|Y) [use reference and target]
-
-      GeCo3 -rm 20:500:1:12:0.9/3:100:0.9 -rm 13:200:1:1:0.9/0:0:0 -tm 1:1:0:1:0.9/0:0:0 -tm 7:10:0:1:0/0:0:0 -tm 16:100:1:10:0/3:10:0.9 -lr 0.03 -hs 64 -r $file.seq $REF_FILE.seq
-      COMPRESSED_SIZE_COND_COMPRESSION=$(ls -l $REF_FILE.seq.co | cut -d' ' -f5)   
-      rm $REF_FILE.seq.co
+      GeCo3 -rm 20:500:1:12:0.9/3:100:0.9 -rm 13:200:1:1:0.9/0:0:0 -tm 1:1:0:1:0.9/0:0:0 -tm 7:10:0:1:0/0:0:0 -tm 16:100:1:10:0/3:10:0.9 -lr 0.03 -hs 64 -r $file_wout_extension.seq $REF_FILE.seq
+      COMPRESSED_SIZE_COND_COMPRESSION=$(ls -l $REF_FILE.seq.co | cut -d' ' -f5)  
+      rm $REF_FILE.seq.*
       
       #Relative compression (only reference models) C(X||Y)
-      GeCo3 -rm 20:500:1:12:0.9/3:100:0.9 -rm 13:200:1:1:0.9/0:0:0 -lr 0.03 -hs 64 -r $file.seq $REF_FILE.seq
-      COMPRESSED_SIZE_W_REF_BYTES=$(ls -l $REF_FILE.seq.co | cut -d' ' -f5)    
-      COMPRESSED_SIZE_W_REF=$(echo "$COMPRESSED_SIZE_W_REF_BYTES * 8.0" | bc -l )   
-      rm $REF_FILE.seq.co            
-      FILE_SIZE=$(ls -l $file | cut -d' ' -f5)
+      GeCo3 -rm 20:500:1:12:0.9/3:100:0.9 -rm 13:200:1:1:0.9/0:0:0 -lr 0.03 -hs 64 -r $file_wout_extension.seq $REF_FILE.seq
+      COMPRESSED_SIZE_W_REF_BYTES=$(ls -l $REF_FILE.seq.co | cut -d' ' -f5)   
+      COMPRESSED_SIZE_W_REF=$(echo "$COMPRESSED_SIZE_W_REF_BYTES * 8.0" | bc -l )  
+      rm $REF_FILE.seq.*            
+      FILE_SIZE=$(ls -l $REF_FILE.seq | cut -d' ' -f5)
      
-      rm $file.seq
-      
+      #printf "NCSD -> $COMPRESSED_SIZE_COND_COMPRESSION " # . $COMPRESSED_SIZE_WOUT_REF"
       NCSD=$(echo $COMPRESSED_SIZE_COND_COMPRESSION \/ $COMPRESSED_SIZE_WOUT_REF |bc -l | xargs printf %.3f)
-       
+           
       AUX_MULT=$(echo "$FILE_SIZE * 2" | bc -l )
-      NRC=$(echo $COMPRESSED_SIZE_W_REF \/ $AUX_MULT|bc -l | xargs printf %.3f)      
-      
+      if [ -z "$AUX_MULT" ]
+        then
+        printf "Skipping compression metrics, no reference.\n\n"
+      else
+        #printf "aux_mult   . $AUX_MULT\n\n"
+        #printf "NRC -> $COMPRESSED_SIZE_W_REF . $AUX_MULT"
+        NRC=$(echo $COMPRESSED_SIZE_W_REF \/ $AUX_MULT|bc -l | xargs printf %.3f)      
+      fi
+            
       IDEN=$(echo $IDEN |bc -l | xargs printf %.3f)
       MEM=$(echo $MEM \/ 1048576 |bc -l | xargs printf %.3f)
-      
-    #file	exec_time	snps	avg_identity	NCSD	NRC	max_mem	cpu_avg	nr_contigs_reconstructed	metagenomic_analysis	metagenomic_classification	coverage	snp_dataset
-    CPU="$(cut -d'%' -f1 <<< "$CPU_P")"
     
-    for tool in "${ORDER_TOOLS_CAP[@]}"
-      do
-      
-      tool_lower=$(echo "$tool" | tr '[:upper:]' '[:lower:]')
-      
-      if [ "$tool_lower" == "$NAME_TOOL" ] ; then
-      
-        NAME_TOOL=$tool
-      
-      fi
-      
-      
-    done
+      #retrieve additional results dnadiff
+      TOTAL_SEQS=`cat out.report | grep "TotalSeqs " | head -n 1 | awk '{ print $2;}'`;
     
-    echo "$file	$name_vir_ref	$TIME	$SNPS	$IDEN	$NCSD	$NRC	$MEM	$CPU_P	$NR_SPECIES	$DOES_ANALYSIS	$DOES_CLASSIFICATION	$NAME_TOOL" >> Results/total_stats.tsv   
+      ALIGNED_SEQS=`cat out.report | grep "AlignedSeqs " | head -n 1 | awk '{ print $2;}'`;  
+      AUX="$(cut -d')' -f1 <<< "$ALIGNED_SEQS")"
+      ALIGNED_SEQS_PERC="$(cut -d'(' -f2 <<< "$AUX")"
+      ALIGNED_SEQS_PERC="$(cut -d'%' -f1 <<< "$ALIGNED_SEQS_PERC")"
+      ALIGNED_SEQS_NR="$(cut -d'(' -f1 <<< "$AUX")"
     
+      ALIGNED_BASES=`cat out.report | grep "AlignedBases " | head -n 1 | awk '{ print $2;}'`;  
+      AUX="$(cut -d')' -f1 <<< "$ALIGNED_BASES")"
+      ALIGNED_BASES_PERC="$(cut -d'(' -f2 <<< "$AUX")"
+      ALIGNED_BASES_PERC="$(cut -d'%' -f1 <<< "$ALIGNED_BASES_PERC")"
+      ALIGNED_BASES_NR="$(cut -d'(' -f1 <<< "$AUX")"
+    
+      UNALIGNED_BASES=`cat out.report | grep "UnalignedBases " | head -n 1 | awk '{ print $2;}'`;  
+      AUX="$(cut -d')' -f1 <<< "$UNALIGNED_BASES")"
+      UNALIGNED_BASES_PERC="$(cut -d'(' -f2 <<< "$AUX")"
+      UNALIGNED_BASES_PERC="$(cut -d'%' -f1 <<< "$UNALIGNED_BASES_PERC")"
+      UNALIGNED_BASES_NR="$(cut -d'(' -f1 <<< "$AUX")"
+    
+      AVG_LEN=`cat out.report | grep "AvgLength " | head -n 1 | awk '{ print $2;}'`;    
+      
+      for tool in "${ORDER_TOOLS_CAP[@]}"
+        do      
+        tool_lower=$(echo "$tool" | tr '[:upper:]' '[:lower:]')
+      
+        if [ "$tool_lower" == "$NAME_TOOL" ] ; then
+      
+          NAME_TOOL=$tool
+      
+        fi 
+      done
 
+      #Write results to respective files
+      echo "$name_vir_ref	$file	$TOTAL_SEQS	$ALIGNED_SEQS_NR	$ALIGNED_SEQS_PERC	$ALIGNED_BASES_NR	$ALIGNED_BASES_PERC	$UNALIGNED_BASES_NR	$UNALIGNED_BASES_PERC	$AVG_LEN	$IDEN	$SNPS" >> Results/dnadiff_stats.tsv 
+
+      CPU="$(cut -d'%' -f1 <<< "$CPU_P")"
+
+      echo "$file	$name_vir_ref	$TIME	$SNPS	$IDEN	$NCSD	$NRC	$MEM	$CPU_P	$NR_SPECIES	$DOES_ANALYSIS	$DOES_CLASSIFICATION	$NAME_TOOL	$SUM_LEN	$MIN_LEN	$MAX_LEN	$AVG_LEN	$SUM_LEN_WOUT_N	$MIN_LEN_WOUT_N	$MAX_LEN_WOUT_N	$AVG_LEN_WOUT_N" >> Results/total_stats.tsv  
+      
+      echo "$NAME_TOOL & $TIME & $SNPS & $IDEN & $NCSD & $NRC & $MEM & $CPU & $NR_SPECIES & $SUM_LEN & $MIN_LEN & $MAX_LEN & $AVG_LEN \\\\\\hline" >> Results/total_stats.tex
     
-    echo "$NAME_TOOL & $name_vir_ref & $TIME & $SNPS & $IDEN & $NCSD & $NRC & $MEM & $CPU & $NR_SPECIES \\\\\\hline" >> Results/total_stats.tex
-    count=$(($count + 1))
-    
-    fi 
-     
-     
-     
-     
-     
-    fi    
+      echo "$NAME_TOOL & $TOTAL_SEQS & $ALIGNED_SEQS_NR & $ALIGNED_BASES_NR & $ALIGNED_BASES_PERC & $UNALIGNED_BASES_NR & $UNALIGNED_BASES_PERC & $AVG_LEN & $SNPS & $IDEN \\\\\\hline" >> Results/dnadiff_stats.tex
+        fi
+      fi
     done
-    
   done
+    
   conda activate base
   
-
-    
-      echo "
-\end{tabular}
-\end{center}
-\end{table*}
-
-
-" >> Results/total_stats.tex  
-  ./Evaluation_k.sh -r $REF_DIR -o $D_PATH
 else 
-  printf "ERR \n\n"
-
+  printf "ERROR: At least one of the input directories does not exist. Exiting.\n\n"
 fi 
+#
 
