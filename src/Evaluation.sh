@@ -364,6 +364,8 @@ if [[ -d "$REF_DIR" ]] && [[ -d "$D_PATH" ]];
     
   conda activate base
   
+  ./Evaluation_k.sh
+  
 else 
   printf "ERROR: At least one of the input directories does not exist. Exiting.\n\n"
 fi 
