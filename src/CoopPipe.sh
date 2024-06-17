@@ -902,7 +902,7 @@ if [[ "$INSTALL_SPECIFIC" -eq "1" ]];
   conda install -c bioconda emboss -y
   conda activate base
   #
-  CHECK_PROGRAMS
+  ./HVRS/src/Verification.sh --tools
   #
   fi
 #
