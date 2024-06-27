@@ -5,8 +5,8 @@ D_PATH="out_analysis"
 REF_DIR=""
 CURR_PATH="$(pwd)"
 #
-declare -a ORDER_TOOLS=("cooppipe" "coronaspades" "haploflow" "lazypipe" "metaspades" "metaviralspades" "pehaplo" "qure" "qvg" "spades" "ssake" "tracespipe" "tracespipelite" "virgena" "vispa" "v")
-declare -a ORDER_TOOLS_CAP=("CoopPipe" "coronaSPAdes" "Haploflow" "LAZYPIPE" "metaSPAdes" "metaviralSPAdes" "PEHaplo" "QuRe" "QVG" "SPAdes" "SSAKE" "TRACESPipe" "TRACESPipeLite" "VirGenA" "ViSpA" "V-pipe")
+declare -a ORDER_TOOLS=("cooppipe" "coronaspades" "haploflow" "irma" "lazypipe" "metaspades" "metaviralspades" "pehaplo" "qure" "qvg" "spades" "ssake" "tracespipe" "tracespipelite" "virgena" "vispa" "v")
+declare -a ORDER_TOOLS_CAP=("CoopPipe" "coronaSPAdes" "Haploflow" "IRMA" "LAZYPIPE" "metaSPAdes" "metaviralSPAdes" "PEHaplo" "QuRe" "QVG" "SPAdes" "SSAKE" "TRACESPipe" "TRACESPipeLite" "VirGenA" "ViSpA" "V-pipe")
 #
 declare -a VIRUSES_AVAILABLE=("B19V" "BuV" "CuV" "HBoV" "AAV" "BKPyV" "JCPyV" "KIPyV"
                     "WUPyV" "MCPyV" "HPyV6" "HPyV7" "TSPyV" "HPyV9" "MWPyV"
@@ -157,6 +157,9 @@ if [[ -d "$REF_DIR" ]] && [[ -d "$D_PATH" ]];
         #Upper case all characters
         cat $file | tr [:lower:] [:upper:] > tmp.txt
         mv tmp.txt $file
+        
+        #remove spaces
+        sed -i "s/ //g" $file
 
         #Run dnadiff and get results
         dnadiff $file $REF_FILE; #run dnadiff

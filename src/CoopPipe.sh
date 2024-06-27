@@ -1,6 +1,7 @@
 #!/bin/bash
 #
 RUN="0";
+CONSENSUS_ONLY="0";
 INSTALL="0";
 INSTALL_SPECIFIC="0";
 INSTALL_CONDA="0";
@@ -22,6 +23,7 @@ TRACESPIPELITE="0";
 VIRGENA="0";
 VISPA="0";
 VPIPE="0";
+IRMA="0";
 #
 VIRGENA_TIMEOUT="15";
 #
@@ -36,7 +38,9 @@ MAFFT="1";
 MUSCLE="0";
 #
 EMBOSS="0";
-SELF="1";
+OAWK="1";
+LAWK="0";
+AWK="0";
 #
 READS1="";
 READS2="";
@@ -55,7 +59,6 @@ declare -a VIRUSES_AVAILABLE=("B19V" "BuV" "CuV" "HBoV" "AAV" "BKPyV" "JCPyV" "K
 declare -a VIRUSES;
 FORCE_REFERENCES="0";
 REFERENCES_DIR="";
-AWK="0";
 #
 RESULT="0";
 #
@@ -83,6 +86,7 @@ SHOW_MENU () {
   echo "                                                                    ";
   echo " --coronaspades                Reconstruction using coronaSPAdes,   ";
   echo " --haploflow                   Reconstruction using Haploflow,      ";
+  echo " --irma                        Reconstruction using IRMA,           ";
   echo " --lazypipe                    Reconstruction using LAZYPIPE,       ";
   echo " --metaspades                  Reconstruction using metaSPAdes,     ";
   echo " --metaviralspades             Reconstruction using metaviralSPAdes,";
@@ -119,9 +123,11 @@ SHOW_MENU () {
   echo "                               Options: mafft, muscle               ";
   echo "                                                                    ";
   echo " --consensus  <STR>            Consensus script to be used.         ";
-  echo "                               Options: self, emboss                ";
+  echo "                               Options: oawk, lawk, awk, emboss     ";
   echo "                                                                    ";
-  echo " --awk  <STR>                  Generate consensus with AWK.         ";
+  echo " --oawk  <STR>                 Generate consensus with OAWK.        ";
+  echo " --lawk  <STR>                 Generate consensus with LAWK.        ";
+  echo " --awk  <STR>                  Generate consensus with AWK.         ";  
   echo " --emboss  <STR>               Generate consensus with EMBOSS.      ";
   echo "                                                                    ";
   echo "                                                                    ";
@@ -517,6 +523,7 @@ CREATE_FINAL_CONSENSUS () {
   DIRECTORY=$1
   #
   cd $DIRECTORY
+  #rm -f cooppipe-*.fa
   for file in $(ls multifasta*.fa);
     do
     eval "$(conda shell.bash hook)"
@@ -526,17 +533,34 @@ CREATE_FINAL_CONSENSUS () {
     #python3 $CURR_PATH/generate_consensus.py -i $file -o cooppipealt-$name_vir-consensus.fa
     if [[ "$EMBOSS" -eq "1" ]];
       then
-      
+      printf "Generating the consensus sequences using EMBOSS.\n\n"
       conda activate emboss
       cons -sequence $file -outseq cooppipe-$name_vir-consensus.fa
       conda activate base
     fi
     
-    if [[ "$SELF" -eq "1" ]];
+    if [[ "$AWK" -eq "1" ]];
       then
+      printf "Generating the consensus sequences using AWK.\n\n"
       python3 $CURR_PATH/weighted_generate_consensus.py -i $file -v $name_vir -k 5 15 30 100 200 400 500
       python3 $CURR_PATH/generate_consensus.py -i new.fa -o cooppipe-$name_vir-consensus.fa
     fi
+    
+    if [[ "$OAWK" -eq "1" ]];
+      then
+      printf "Generating the consensus sequences using OAWK.\n\n"
+      python3 $CURR_PATH/OAWK.py -i $file -v $name_vir -k 5 -b 0.1
+      mv new.fa cooppipe-$name_vir-consensus.fa
+    fi
+    
+    if [[ "$LAWK" -eq "1" ]];
+      then
+      printf "Generating the consensus sequences using LAWK.\n\n"
+      python3 $CURR_PATH/LAWK.py -i $file -v $name_vir -k 5 -d $CURR_PATH/models -m mlp
+      mv new.fa cooppipe-$name_vir-consensus.fa
+    fi
+    
+    
   done
   #mkdir combined
   #mv *-combined.fa combined
@@ -600,6 +624,11 @@ while [[ $# -gt 0 ]]
       HAPLOFLOW=$RESULT;
       shift
     ;;
+    --irma)
+      check_installation irma;
+      IRMA=$RESULT;
+      shift
+    ;;
     --lazypipe)
       check_installation lazypipe;
       LAZYPIPE=$RESULT;
@@ -633,7 +662,6 @@ while [[ $# -gt 0 ]]
     --spades)      
       check_installation spades;
       SPADES=$RESULT;
-      printf "SPADES -> $RUN_SPADES\n\n"
       shift
     ;;
     --ssake)
@@ -671,6 +699,8 @@ while [[ $# -gt 0 ]]
       CORONASPADES=$RESULT;
       check_installation haploflow;
       HAPLOFLOW=$RESULT;
+      check_installation irma;
+      IRMA=$RESULT;
       check_installation lazypipe;
       LAZYPIPE=$RESULT;
       check_installation metaspades;
@@ -744,7 +774,7 @@ while [[ $# -gt 0 ]]
       TMP="$2";
       TMP=$(echo "$TMP" | tr '[:upper:]' '[:lower:]')
 
-      if [[ "$TMP" == "BWA" ]];
+      if [[ "$TMP" == "bwa" ]];
         then
         BWA="1"
         BOWTIE2="0"  
@@ -769,19 +799,54 @@ while [[ $# -gt 0 ]]
       if [[ "$TMP" == "emboss" ]];
         then
         EMBOSS="1"
-        SELF="0"  
-      fi     
+        AWK="0"
+        OAWK="0"
+        LAWK="0"  
+      elif [[ "$TMP" == "awk" ]];
+        then
+        EMBOSS="0"
+        AWK="1"
+        OAWK="0"
+        LAWK="0" 
+      elif [[ "$TMP" == "lawk" ]];
+        then
+        EMBOSS="0"
+        AWK="0"
+        OAWK="0"
+        LAWK="1"       
+      fi 
+          
       shift 2;
     ;;
     --awk)
+      RUN="0";
+      CONSENSUS_ONLY="1";
       OUTPUT="$(pwd)/$2";
       AWK="1"
+      OAWK="0" 
+      shift 2;
+    ;;
+    --lawk)
+      RUN="0";
+      CONSENSUS_ONLY="1";
+      OUTPUT="$(pwd)/$2";
+      LAWK="1"
+      OAWK="0" 
+      shift 2;
+    ;;
+    --oawk)
+      RUN="0";
+      CONSENSUS_ONLY="1";
+      OUTPUT="$(pwd)/$2";
+      OAWK="1"
       shift 2;
     ;;
     --emboss)
+      RUN="0";
+      CONSENSUS_ONLY="1";
       OUTPUT="$(pwd)/$2";
       EMBOSS="1"
-      SELF="0"  
+      OAWK="0"  
       shift 2;
     ;;
     -o|--output)
@@ -837,10 +902,11 @@ if [[ "$INSTALL_SPECIFIC" -eq "1" ]];
   #
   eval "$(conda shell.bash hook)"
   sudo apt install git -y
+  sudo apt install bedops -y
   #rm -rf HVRS
   if [[ "$INSTALL" -eq "1" ]];
     then
-    git clone https://github.com/mirakaya/HVRS.git
+    git clone https://github.com/viromelab/HVRS.git
     cd HVRS/src/
     chmod +x *.sh
     ./Installation.sh --all
@@ -900,7 +966,14 @@ if [[ "$INSTALL_SPECIFIC" -eq "1" ]];
   conda create -n emboss -y 
   conda activate emboss
   conda install -c bioconda emboss -y
+  conda install -c conda-forge libiconv -y
   conda activate base
+  #OAWK
+  git clone https://github.com/cobilab/OAWK
+  cp -r OAWK/src/* . 
+  #LAWK
+  git clone https://github.com/mirakaya/LAWK_consensus_generator
+  cp -r LAWK_consensus_generator/src/* . 
   #
   ./HVRS/src/Verification.sh --tools
   #
@@ -962,7 +1035,7 @@ if [[ "$CORONASPADES" -eq "1" ]];
     cp $READS1 $READS2 input
     /bin/time -f "TIME\t%e\nMEM\t%M\nCPU_perc\t%P" -o coronaspades-time.txt coronaspades.py -o output -1 input/$aux_READS1 -2 input/$aux_READS2 -t $THREADS -m $MEMORY 
     mv coronaspades-time.txt $OUTPUT
-    mv output/raw_scaffolds.fasta output/coronaspades-reconstructed.fa
+    mv output/scaffolds.fasta output/coronaspades-reconstructed.fa
     cp output/coronaspades-reconstructed.fa $OUTPUT
     cd ..
     conda activate base
@@ -995,7 +1068,93 @@ if [[ "$CORONASPADES" -eq "1" ]];
     cd $CURR_PATH
     CLASSIFY_INPUT Haploflow $OUTPUT/haploflow-reconstructed.fa
     mv Haploflow $OUTPUT
+    ALIGN_TO_REF $OUTPUT/Haploflow $OUTPUT/haploflow-reconstructed.fa haploflow
     cd $TOOL_PATH
+  fi
+  #
+  #IRMA
+  if [[ "$IRMA" -eq "1" ]] 
+    then
+    printf "Reconstructing with IRMA\n\n"
+  
+    #create irma module 
+    cd flu-amd/IRMA_RES/modules
+
+    for virus in "${VIRUSES[@]}"
+      do
+    
+      aux_virus="$(cut -d'.' -f1 <<< $virus)"
+      aux_virus="$(echo $aux_virus | awk -F/ '{print $NF}')"
+     
+      rm -rf $aux_virus
+      cp -r ORG $aux_virus
+      cd $aux_virus/reference
+      cp $virus .
+      mv $aux_virus.fa consensus.fasta
+      cd ../
+      ./init.sh
+      cd ..
+    done
+    cd ../../
+
+    for virus in "${VIRUSES[@]}"
+      do
+    
+      aux_virus="$(cut -d'.' -f1 <<< $virus)"
+      aux_virus="$(echo $aux_virus | awk -F/ '{print $NF}')"
+      
+      if [[ -d "IRMA_RES/modules/$aux_virus" ]]; then
+        cp $READS1 $READS2 .
+      
+        /bin/time -f "TIME\t%e\nMEM\t%M\nCPU_perc\t%P" -o irma-${aux_virus}-time.txt ./IRMA $aux_virus $aux_READS1 $aux_READS2 reconstructed
+      
+        cd reconstructed
+        mv *.fasta ..
+        cd ..
+        rm -rf reconstructed
+      fi
+    done
+  
+    cat *.fasta > irma-reconstructed.fa
+    mv irma-reconstructed.fa $OUTPUT
+ 
+    total_time=0
+    total_mem=0
+    total_cpu=0
+    count=0
+    for f in irma-*-time.txt
+      do
+      echo "Processing $f" 
+      cat $f
+      TIME=`cat $f | grep "TIME" | awk '{ print $2;}'`;
+      MEM=`cat $f | grep "MEM" | awk '{ print $2;}'`;
+      CPU=`cat $f | grep "CPU_perc" | awk '{ print $2;}'`;
+      CPU="$(cut -d'%' -f1 <<< $CPU)"
+      total_time=`echo "$total_time+$TIME" | bc -l`
+      if [[ $MEM -gt $total_mem ]]
+        then
+        total_mem=$MEM
+      fi
+    
+      total_cpu=`echo "$total_cpu+$CPU" | bc -l`
+      count=`echo "$count+1" | bc -l`
+    done
+    
+    printf "$total_cpu    -   $count     "
+    total_cpu=$(echo $total_cpu \/ $count |bc -l | xargs printf %.0f)
+    echo "TIME	$total_time
+MEM	$total_mem
+CPU_perc	$total_cpu%" > irma-time.txt
+    mv irma-time.txt $OUTPUT
+    
+    cd ../ 
+   
+    cd $CURR_PATH
+    CLASSIFY_INPUT IRMA $OUTPUT/irma-reconstructed.fa
+    mv IRMA $OUTPUT
+    ALIGN_TO_REF $OUTPUT/IRMA $OUTPUT/irma-reconstructed.fa irma
+    cd $TOOL_PATH 
+   
   fi
   #
   if [[ "$LAZYPIPE" -eq "1" ]];
@@ -1102,7 +1261,7 @@ if [[ "$CORONASPADES" -eq "1" ]];
     mv Contigs.fa pehaplo-reconstructed.fa
     cp pehaplo-reconstructed.fa $OUTPUT
     rm -rf Contigs.fa
-    cd ../
+    cd ../dataset
     rm -rf assembly
     cd ../../
     conda activate base  
@@ -1306,7 +1465,7 @@ CPU_perc	$total_cpu%" > qvg-time.txt
     cd ../src/
     cp ../../VDB.fa .
 
-    /bin/time -f "TIME\t%e\nMEM\t%M\nCPU_perc\t%P" -o tracespipe-time.txt ./TRACESPipe.sh --run-meta --run-all-v-alig --very-sensitive -t $THREADS --cache 10
+    /bin/time -f "TIME\t%e\nMEM\t%M\nCPU_perc\t%P" -o tracespipe-time.txt ./TRACESPipe.sh --flush-logs --run-meta --threads $THREADS --inter-sim-size 1 --run-all-v-alig --run-mito --remove-dup --run-de-novo --run-hybrid --min-similarity 5 --view-top 5 --very-sensitive 
     cp tracespipe-time.txt ../
     cd ../output_data/TRACES_viral_consensus
     cat *.fa > ../../tracespipe-reconstructed.fa     
@@ -1379,7 +1538,6 @@ CPU_perc	$total_cpu%" > qvg-time.txt
     
     for virus in "${VIRUSES[@]}"
     do
-      #rm -rf ${dataset}_*.fq
       rm -rf ${virus}.fa
       rm -rf *.gz
       
@@ -1388,8 +1546,6 @@ CPU_perc	$total_cpu%" > qvg-time.txt
     
       gzip *.fq
       
-      #rm -rf $dataset-$virus 
-      #mkdir $dataset-$virus
       
       aux_virus="$(cut -d'.' -f1 <<< $virus)"
       aux_virus="$(echo $aux_virus | awk -F/ '{print $NF}')"
@@ -1537,7 +1693,7 @@ CPU_perc	$total_cpu%" > ../virgena-time.txt
     for virus in "${VIRUSES[@]}"
     do
       cp $virus .
-      #read a
+      
       aux_virus="$(cut -d'.' -f1 <<< $virus)"
       aux_virus="$(echo $aux_virus | awk -F/ '{print $NF}')"
 
@@ -1728,32 +1884,20 @@ CPU_perc	$total_cpu%" > v-pipe-time.txt
     mv V-pipe $OUTPUT
     ALIGN_TO_REF $OUTPUT/V-pipe $OUTPUT/v-pipe-reconstructed.fa v-pipe
     cd $TOOL_PATH
-  fi 
+  fi
+   
   cd $CURR_PATH
   PERFORM_MULTIPLE_ALIGNMENT $OUTPUT/consensus
   CREATE_FINAL_CONSENSUS $OUTPUT/consensus
-fi
-#
-################################################################################
-#
-#PERFORM_MULTIPLE_ALIGNMENT $OUTPUT/consensus
-if [[ "$AWK" -eq "1" ]];
+
+elif [[ "$CONSENSUS_ONLY" -eq "1" ]];
   then
+  
+  printf "Generating only the consensus sequences.\n\n"
+  # generate the consensus for the directory chosen
   CREATE_FINAL_CONSENSUS $OUTPUT/consensus
 fi
-#
-if [[ "$EMBOSS" -eq "1" ]];
-  then
-  CREATE_FINAL_CONSENSUS $OUTPUT/consensus
-fi
-#
-#printf "Evaluating results based on the classification made of the input reads.\n\n"
-#cd references
-#cat *.fa > reference_file.fa
-#cp reference_file.fa ../ 
-#cd ..
-#./Evaluation.sh -ref reference_file.fa
-#
+
 ################################################################################
 #
 
