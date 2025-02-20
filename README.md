@@ -5,7 +5,7 @@ Cooperative Pipeline for human viral genome reconstruction.
 
 To download CoopPipe in a Linux system, please run:
 <pre>
-git clone https://github.com/mirakaya/CoopPipe.git
+git clone https://github.com/viromelab/CoopPipe.git
 cd CoopPipe/src/
 chmod +x *.sh
 </pre>
